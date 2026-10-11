@@ -16,7 +16,7 @@ export function installCredits({ show, getLanguage, registerCleanup }) {
   function loginButton() { return `<button class="google-signin" id="credit-signin" ${!identity.configured ? 'disabled' : ''}>${googleIcon}${text('signIn')}</button>`; }
   function bindSignIn() {
     const button = document.querySelector('#credit-signin');
-    if (button) button.onclick = async () => { if (signing) return; signing = true; button.disabled = true; status(text('loading')); try { await identity.signIn(); } catch (e) { if (!['auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(e.code)) status(text('error'), 'error'); } finally { signing = false; if (button.isConnected) button.disabled = false; } };
+    if (button) button.onclick = async () => { if (signing) return; signing = true; button.disabled = true; status(text('loading')); try { await identity.signIn(); } catch (e) { if (['auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(e.code)) status(''); else status(text('error'), 'error'); } finally { signing = false; if (button.isConnected) button.disabled = false; } };
     const out = document.querySelector('#credit-signout'); if (out) out.onclick = () => identity.signOut().catch(() => status(text('error'),'error'));
   }
   function wallet() {
