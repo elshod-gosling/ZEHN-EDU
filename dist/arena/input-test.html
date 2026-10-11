@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mouse capture test — LevelUp</title>
+<style>body{margin:0;background:#141714;color:#f5f5ee;font:17px/1.5 system-ui,sans-serif}main{max-width:720px;margin:8vh auto;padding:28px}a{color:#d9ef64}h1{font-size:clamp(32px,6vw,54px);line-height:1.1}button{padding:16px 24px;font:700 17px system-ui;border:0;border-radius:6px;background:#d9ef64;color:#141714;cursor:pointer}button:disabled{opacity:.6}pre{padding:20px;background:#242924;white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.6 ui-monospace,monospace;border:1px solid #424b42}p{color:#c4cbc1}button:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:4px}</style></head>
+<body><main><a id="back" href="./?lang=en">← Back to arena</a><h1 id="title">Mouse capture test</h1><p id="intro">This page tests mouse lock directly, without the 3D game. Click the button. If it works, the cursor disappears; press Esc to release it.</p><button id="capture">Test mouse lock</button><p id="status" role="status">Ready.</p><pre id="report"></pre></main>
+<script type="module">
+const messages={
+ en:{back:'← Back to arena',title:'Mouse capture test',intro:'This page tests mouse lock directly, without the 3D game. Click the button. If it works, the cursor disappears; press Esc to release it.',capture:'Test mouse lock',ready:'Ready.',pending:'Requesting mouse lock…',locked:'Mouse locked. Move your mouse; press Esc to release it.',released:'Mouse released.',failed:'Mouse lock failed. Copy the report below when reporting the problem.'},
+ uz:{back:'← Arenaga qaytish',title:'Sichqonchani qulflash sinovi',intro:'Bu sahifa sichqonchani 3D o‘yinsiz, bevosita qulflashni sinaydi. Tugmani bos. Ishlasa, kursor yo‘qoladi. Uni bo‘shatish uchun Esc bos.',capture:'Qulflashni sinash',ready:'Tayyor.',pending:'Sichqoncha qulflanmoqda…',locked:'Sichqoncha qulflandi. Uni harakatlantir; bo‘shatish uchun Esc bos.',released:'Sichqoncha bo‘shatildi.',failed:'Sichqoncha qulflanmadi. Muammoni bildirish uchun pastdagi hisobotni nusxala.'},
+ ru:{back:'← Вернуться в арену',title:'Проверка захвата мыши',intro:'Эта страница проверяет захват мыши напрямую, без 3D-игры. Нажми кнопку. Если захват работает, курсор исчезнет. Нажми Esc, чтобы освободить его.',capture:'Проверить захват',ready:'Готово.',pending:'Запрос захвата мыши…',locked:'Мышь захвачена. Подвигай ей; нажми Esc, чтобы освободить.',released:'Мышь освобождена.',failed:'Захват не удался. Скопируй отчёт ниже при сообщении о проблеме.'}
+};
+const lang=new URLSearchParams(location.search).get('lang'),m=messages[lang]||messages.en;
+document.documentElement.lang=messages[lang]?lang:'en';
+for(const key of ['back','title','intro','capture'])document.getElementById(key).textContent=m[key];
+document.getElementById('back').href=`./?lang=${document.documentElement.lang}`;
+const button=document.getElementById('capture'),status=document.getElementById('status'),report=document.getElementById('report');
+let timer,details,waiting=false,moves=0;
+function show(result){report.textContent=[`Result: ${result}`,`Browser: ${navigator.userAgent}`,`Secure context: ${window.isSecureContext}`,`Top-level page: ${window===window.top}`,`Focused at click: ${details?.focus??'not tested'}`,`Active click: ${details?.activation??'not tested'}`,`Pointer Lock API: ${typeof document.body.requestPointerLock==='function'}`,`Locked: ${document.pointerLockElement===document.body}`,`Mouse movements while locked: ${moves}`].join('\n');}
+function finish(error){clearTimeout(timer);waiting=false;button.disabled=false;status.textContent=error?m.failed:m.locked;show(error?`${error.name} · ${error.message}`:'success');}
+button.onclick=()=>{
+ details={focus:document.hasFocus(),activation:navigator.userActivation?.isActive};moves=0;waiting=true;button.disabled=true;status.textContent=m.pending;
+ try{
+  // Intentionally direct: no game, canvas focus, fullscreen or shared capture helper.
+  timer=setTimeout(()=>finish(new Error('No pointerlockchange received within 10 seconds')),10000);
+  const request=document.body.requestPointerLock();
+  if(request&&typeof request.then==='function')request.then(()=>{if(document.pointerLockElement===document.body)finish();},finish);
+ }catch(error){finish(error);}
+};
+document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement===document.body)finish();else{clearTimeout(timer);waiting=false;button.disabled=false;status.textContent=m.released;show('released');}});
+document.addEventListener('pointerlockerror',()=>{if(waiting){status.textContent=m.failed;}});
+document.addEventListener('mousemove',()=>{if(document.pointerLockElement===document.body){moves++;show('success');}});
+status.textContent=m.ready;show('not tested');
+</script></body></html>
