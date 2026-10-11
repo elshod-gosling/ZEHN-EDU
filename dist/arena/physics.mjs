@@ -52,4 +52,18 @@ export function attack(a,b,solids=SOLIDS){
  return {kind:critical?'crit':'hit',id:a.id,target:b.id,damage,health:b.health};
 }
 export function separatePlayers(a,b){const dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz);if(d>0&&d<.6&&Math.abs(a.y-b.y)<1.8){const k=(.6-d)*.04;a.vx-=dx/d*k;a.vz-=dz/d*k;b.vx+=dx/d*k;b.vz+=dz/d*k;}}
-export function botInput(bot,target,tick,dummy=false){const dx=target.x-bot.x,dz=target.z-bot.z,dist=Math.hypot(dx,dz);const i=emptyInput();i.yaw=Math.atan2(-dx,-dz);i.pitch=Math.atan2(target.y+.95-(bot.y+1.62),dist);if(dummy)return i;i.forward=dist>2.55?1:dist<1.5?-.5:.08;i.strafe=dist<5?Math.sin(tick/23)*.75:0;i.sprint=dist>4;i.jump=dist>3.5&&tick%45===0;i.slot=target.shieldTicks>=5?1:0;i.shield=dist<3.2&&tick%50>32;i.attack=dist<3&&charge(bot)>.95&&!i.shield;return i;}
+export function botInput(bot,target,tick,dummy=false){
+ const dx=target.x-bot.x,dz=target.z-bot.z,dist=Math.hypot(dx,dz),i=emptyInput();
+ const aimYaw=Math.atan2(-dx,-dz),aimPitch=Math.atan2(target.y+.95-(bot.y+1.62),dist);
+ if(dummy){i.yaw=aimYaw;i.pitch=aimPitch;return i;}
+ // Easy practice: reassess aim every 300 ms instead of tracking perfectly.
+ i.yaw=bot.yaw;i.pitch=bot.pitch;
+ if(tick%6===0){const turn=Math.atan2(Math.sin(aimYaw-bot.yaw),Math.cos(aimYaw-bot.yaw));i.yaw+=clamp(turn,-.32,.32);i.pitch+=clamp(aimPitch-bot.pitch,-.18,.18);}
+ // Short breaks leave time to recover, reposition, or eat an apple.
+ if(tick%120>=90)return i;
+ i.forward=dist>2.4?.6:dist<1.5?-.25:0;
+ i.strafe=dist<5?Math.sin(tick/30)*.18:0;
+ i.shield=dist<3.2&&tick%100>=80&&tick%100<90;
+ i.attack=tick>=36&&tick%36===0&&dist<3&&charge(bot)>.95&&!i.shield;
+ return i;
+}
