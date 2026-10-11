@@ -8,20 +8,26 @@ p=player();i=emptyInput();i.jump=true;let apex=0;for(let k=0;k<10;k++){tickPlaye
 p=player();i=emptyInput();i.forward=1;i.sprint=true;i.jump=true;tickPlayer(p,i);assert(Math.abs(p.z+6)>.3&&Math.abs(p.vz)>.15,'Sprint jump preserves a directional impulse');
 const pair=()=>{const a=player(),b=player(1);a.z=0;a.yaw=0;b.z=-2;b.yaw=Math.PI;return [a,b];};
 let [a,b]=pair();let hit=attack(a,b);assert.equal(hit.kind,'hit');assert(Math.abs(hit.damage-1.89)<1e-8);const hp=b.health;attack(a,b);assert.equal(b.health,hp,'Spam cannot bypass damage immunity');assert(charge(a)<.05,'Attacks reset cooldown');
-for(const [slot,wait] of [[0,13],[1,20]]){
- [a,b]=pair();a.slot=slot;assert.equal(attack(a,b).kind,'hit');const health=b.health;
- assert.equal(cooldownSeconds(a),wait/20,'Weapon reports its complete cooldown');
- for(let elapsed=1;elapsed<wait;elapsed++){
-  advance(a,{...emptyInput(),slot},1);
-  assert.equal(attack(a,b),null,'Rapid clicks cannot produce an early swing');
-  assert.equal(a.charge,elapsed,'Ignored clicks do not restart the cooldown');
-  assert.equal(b.health,health,'An early click cannot damage the opponent');
+for(const [slot,period] of [[0,12.5],[1,20]]){
+ [a,b]=pair();a.slot=slot;const full=attack(a,b).damage;
+ assert.equal(cooldownSeconds(a),period/20);
+ // Fresh targets isolate attack strength from the separate hurt-immunity window.
+ for(const elapsed of [0,3,6]){
+  [a,b]=pair();a.slot=slot;a.charge=elapsed;
+  const result=attack(a,b);
+  assert.equal(result.kind,'hit','Early swings are allowed');
+  assert(result.damage<full,'Early swings deal less damage');
+  assert(Math.abs(result.damage-armorDamage((slot?9:7)*(.2+.8*Math.min(1,(elapsed+.5)/period)**2)))<1e-9,'Vanilla attack-strength curve');
+  assert.equal(a.charge,0,'Every swing restarts recharge');
  }
- advance(a,{...emptyInput(),slot},1);b.hurt=0;
- assert.equal(cooldownSeconds(a),0);assert.equal(attack(a,b).kind,'hit','Swing becomes available at expiry');
+ [a,b]=pair();a.slot=slot;a.charge=Math.ceil(period-.5);
+ assert.equal(attack(a,b).damage,full,'Half-tick sampling reaches full damage at the correct tick');
 }
-[a,b]=pair();a.z=4;assert.equal(attack(a,b).kind,'miss');a.z=0;assert.equal(attack(a,b),null,'Missed swings also start the cooldown');
-[a,b]=pair();attack(a,b);advance(a,{...emptyInput(),slot:1},1);assert.equal(cooldownSeconds(a),1);assert.equal(attack(a,b),null,'Swapping to the axe cannot bypass cooldown');advance(a,emptyInput(),1);assert.equal(cooldownSeconds(a),.65);assert.equal(attack(a,b),null,'Swapping back to the sword starts its cooldown');
+[a,b]=pair();a.z=4;assert.equal(attack(a,b).kind,'miss');assert.equal(a.charge,0,'A missed swing resets recharge');a.z=0;assert.equal(attack(a,b).kind,'hit','An early swing after a miss remains allowed');
+[a,b]=pair();attack(a,b);advance(a,{...emptyInput(),slot:1},1);assert.equal(cooldownSeconds(a),1);assert.equal(attack(a,b).kind,'immune','Early axe swings obey target damage immunity');advance(a,emptyInput(),1);assert.equal(cooldownSeconds(a),.625,'Switching back resets sword recharge');
+[a,b]=pair();a.charge=3;a.ground=false;a.vy=-.1;a.fall=.2;assert.equal(attack(a,b).kind,'hit','Weak falling hits cannot crit');
+[a,b]=pair();b.shieldTicks=5;a.slot=1;a.charge=3;assert.equal(attack(a,b).kind,'block');assert.equal(b.shieldDisabled,0,'Weak axe hits cannot disable shields');
+p=player();p.charge=6;assert.equal(charge(p,.25),.5,'Render interpolation fills the crosshair bar smoothly');
 [a,b]=pair();a.ground=false;a.y=.3;a.vy=-.1;a.fall=.1;a.pitch=-.15;hit=attack(a,b);assert.equal(hit.kind,'crit');assert(hit.damage>2.7,'Falling crit increases armored damage');
 [a,b]=pair();b.shieldTicks=5;assert.equal(attack(a,b).kind,'block');assert.equal(b.health,20);a.slot=1;a.charge=30;assert.equal(attack(a,b).kind,'disable');assert.equal(b.shieldDisabled,100);
 [a,b]=pair();b.shieldTicks=5;b.yaw=0;assert.equal(attack(a,b).kind,'hit','Shield cannot block from behind');

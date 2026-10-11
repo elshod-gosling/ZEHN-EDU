@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {TICK,player,emptyInput,tickPlayer,attack,charge,cooldownSeconds,botInput,separatePlayers,sanitizeInput,SOLIDS} from './physics.mjs';
+import {TICK,player,emptyInput,tickPlayer,attack,charge,botInput,separatePlayers,sanitizeInput,SOLIDS} from './physics.mjs';
 import {DuelPeer} from './peer.mjs';
 import {createMouseCapture} from './mouse.mjs';
 import {createFrameLoop} from './loop.mjs';
@@ -26,9 +26,9 @@ for(const [l,values] of Object.entries({
  ru:{captureTest:'Проверить захват без игры ↗',captureInternal:'Браузер вернул внутреннюю ошибку захвата мыши. Открой простую проверку ниже, чтобы узнать, возникает ли та же ошибка без игры.'}
 }))Object.assign(COPY[l],values);
 for(const [l,values] of Object.entries({
- en:{cooldown:'Cooldown',cooldownHelp:'Sword: 0.65 s. Axe: 1 s. Wait for Ready before swinging again. Extra clicks during cooldown are ignored.'},
- uz:{cooldown:'Qayta zarbagacha',cooldownHelp:'Qilich: 0,65 soniya. Bolta: 1 soniya. Yana zarba berishdan oldin «Tayyor» yozuvini kut. Kutish vaqtida bosish zarba bermaydi.'},
- ru:{cooldown:'Перезарядка',cooldownHelp:'Меч: 0,65 с. Топор: 1 с. Перед следующим ударом дождись «Готово». Щелчки во время перезарядки игнорируются.'}
+ en:{cooldown:'Attack strength',cooldownHelp:'Swing whenever you want. Early swings are weaker and restart recharge. A diamond sword recovers in 0.625 s; a diamond axe in 1 s. Watch the small bar below the crosshair and time your hits.'},
+ uz:{cooldown:'Zarba kuchi',cooldownHelp:'Istalgan payt zarba berish mumkin. Erta zarba kuchsizroq bo‘ladi va kuch yig‘ilishi boshidan boshlanadi. Olmos qilich 0,625 soniyada, olmos bolta 1 soniyada tayyor bo‘ladi. Nishon ostidagi kichik chiziqqa qarab, zarba vaqtini tanla.'},
+ ru:{cooldown:'Сила атаки',cooldownHelp:'Можно ударить в любой момент. Ранние удары слабее и сбрасывают заряд. Алмазный меч восстанавливается за 0,625 с, алмазный топор — за 1 с. Следи за маленькой полоской под прицелом и выбирай момент удара.'}
 }))Object.assign(COPY[l],values);
 let lang=new URLSearchParams(location.search).get('lang');try{lang=lang||localStorage.getItem('levelup-language');}catch{}if(!COPY[lang]){const zone=Intl.DateTimeFormat().resolvedOptions().timeZone;lang=/Tashkent|Samarkand/.test(zone)?'uz':navigator.language?.startsWith('ru')?'ru':'en';}const t=k=>COPY[lang][k]||k;
 function translate(){document.documentElement.lang=lang;$$('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));$('#language').value=lang;$('#armor').ariaLabel=t('armor');$('#scene').ariaLabel=t('scene');$('#back').href='../?lang='+lang;if(renderer){$('#graphics-status').textContent=t(quality==='high'?'highDetails':quality==='balanced'?'balancedDetails':'lowDetails');if(!running)$('#performance').textContent=t(quality==='high'?'high':quality==='balanced'?'balanced':'low')+' · VSync';}updateStart();}
@@ -149,25 +149,24 @@ function simTick(){if(!running)return;const input=readInput();attackPending=fals
  if(mode==='peer'){remoteInput.attack=false;network.send(snapshot());}
  ticks++;roundTicks++;if(players.some(p=>p.health<=0)||roundTicks>=3600)roundEnd();
 }
-function updateCooldown(p){
- const remaining=cooldownSeconds(p),weapon=p.slot<2,track=$('#attack-cooldown');
- track.hidden=$('#charge-label').hidden=!weapon;
- track.classList.toggle('cooling',remaining>0);
+function updateCooldown(p,partialTick=0){
+ const strength=charge(p,partialTick),weapon=p.slot<2,track=$('#attack-cooldown');
+ track.hidden=!weapon||strength>=1;
  track.setAttribute('aria-label',t('cooldown'));
- track.setAttribute('aria-valuenow',Math.round(charge(p)*100));
- track.setAttribute('aria-valuetext',remaining>0?remaining.toFixed(2)+' '+t('seconds'):t('ready'));
- $('#charge').style.width=charge(p)*100+'%';
- $('#charge-label').textContent=t(p.slot===0?'sword':'axe')+' · '+(remaining>0?t('cooldown')+' '+remaining.toFixed(2)+' '+t('seconds'):t('ready'));
+ track.setAttribute('aria-valuenow',Math.round(strength*100));
+ track.setAttribute('aria-valuetext',Math.round(strength*100)+'%');
+ $('#charge').style.width=strength*100+'%';
 }
-function hud(){const p=players[localId],b=players[1-localId];$('#opponent-name').textContent=t(mode==='peer'?'friend':mode);$('#enemy-health').style.width=Math.max(0,b.health/20*100)+'%';$('#enemy-health-value').textContent=b.health.toFixed(1)+' / 20';$('#score').textContent=scores[localId]+' : '+scores[1-localId];const sec=Math.floor(roundTicks/20);$('#round-time').textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');$('#hearts').innerHTML=Array.from({length:10},(_,j)=>`<span class="heart ${p.health>=j*2+2?'':p.health>j*2?'half':'empty'}">♥</span>`).join('');$('#hearts').ariaLabel=`${Math.ceil(p.health)} / 20`;$('#absorption').textContent='♥'.repeat(Math.ceil(p.absorption/2));updateCooldown(p);$('#apple-count').textContent=p.apples;$('#shield-state').textContent=p.use?t('eating')+' '+Math.round(p.use/32*100)+'%':p.shieldDisabled?t('disabled')+' '+(p.shieldDisabled/20).toFixed(1)+t('seconds'):p.shieldTicks>=5?t('shield'):'';$$('[data-slot]').forEach(b=>b.classList.toggle('selected',Number(b.dataset.slot)===slot));$('#look-help').hidden=!!document.pointerLockElement;}
+function hud(){const p=players[localId],b=players[1-localId];$('#opponent-name').textContent=t(mode==='peer'?'friend':mode);$('#enemy-health').style.width=Math.max(0,b.health/20*100)+'%';$('#enemy-health-value').textContent=b.health.toFixed(1)+' / 20';$('#score').textContent=scores[localId]+' : '+scores[1-localId];const sec=Math.floor(roundTicks/20);$('#round-time').textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');$('#hearts').innerHTML=Array.from({length:10},(_,j)=>`<span class="heart ${p.health>=j*2+2?'':p.health>j*2?'half':'empty'}">♥</span>`).join('');$('#hearts').ariaLabel=`${Math.ceil(p.health)} / 20`;$('#absorption').textContent='♥'.repeat(Math.ceil(p.absorption/2));$('#apple-count').textContent=p.apples;$('#shield-state').textContent=p.use?t('eating')+' '+Math.round(p.use/32*100)+'%':p.shieldDisabled?t('disabled')+' '+(p.shieldDisabled/20).toFixed(1)+t('seconds'):p.shieldTicks>=5?t('shield'):'';$$('[data-slot]').forEach(b=>b.classList.toggle('selected',Number(b.dataset.slot)===slot));$('#look-help').hidden=!!document.pointerLockElement;}
 let frames=0,fpsSince=performance.now(),hudSince=0,visual=[{x:0,y:0,z:-6},{x:0,y:0,z:6}];
-function frame(now,delta){
+function frame(now,delta,partialTick=0){
  const renderDelta=Math.min(100,delta);
+ if(running)updateCooldown(players[localId],partialTick);
  if(started){const me=players[localId],other=players[1-localId],lerp=1-Math.exp(-renderDelta/42);for(let k=0;k<2;k++)for(const axis of ['x','y','z'])visual[k][axis]+= (players[k][axis]-visual[k][axis])*lerp;
  const v=visual[localId];camera.position.set(v.x,v.y+1.62,v.z);camera.rotation.set(pitch,yaw,0);const speed=Math.hypot(me.vx,me.vz),bob=Math.sin(now*.013)*Math.min(.018,speed*.06);camera.position.y+=me.ground?bob:0;
  const targetFov=me.sprint?82:75;camera.fov+=(targetFov-camera.fov)*(1-Math.exp(-renderDelta/103));camera.updateProjectionMatrix();avatar.position.set(visual[1-localId].x,visual[1-localId].y,visual[1-localId].z);avatar.rotation.y=other.yaw;
  const walk=Math.sin(now*.012)*Math.min(.7,Math.hypot(other.vx,other.vz)*4);avatar.userData.legLeft.rotation.x=walk;avatar.userData.legRight.rotation.x=-walk;avatar.userData.armRight.rotation.x=other.swing?-.9-Math.sin(other.swing/5*Math.PI)*.9:-walk*.7;avatar.userData.armLeft.rotation.x=other.shieldTicks>=5?-.9:walk*.7;avatar.userData.sword.visible=other.slot===0;avatar.userData.axe.visible=other.slot===1;avatar.userData.shield.rotation.y=other.shieldTicks>=5?.2:0;avatar.scale.setScalar(other.health>0?1:.2);
- const swing=Math.sin(me.swing/5*Math.PI);weaponRoot.position.set(.43-swing*.25,-.52+bob-swing*.07,-.78+swing*.15);weaponRoot.rotation.set(-swing*.85,0,-.28-swing*.5);swordModel.visible=me.slot===0;axeModel.visible=me.slot===1;appleModel.visible=me.slot===2;shieldModel.position.set(me.shieldTicks>=5?-.31:-.53,me.shieldTicks>=5?-.14:-.56,-.71);shieldModel.rotation.x=me.shieldTicks>=5?0:-.18;
+ const recovery=me.slot<2?1-charge(me,partialTick):0,swing=Math.sin(me.swing/5*Math.PI);weaponRoot.position.set(.43-swing*.25,-.52+bob-swing*.07-recovery*.15,-.78+swing*.15);weaponRoot.rotation.set(-swing*.85-recovery*.2,0,-.28-swing*.5);swordModel.visible=me.slot===0;axeModel.visible=me.slot===1;appleModel.visible=me.slot===2;shieldModel.position.set(me.shieldTicks>=5?-.31:-.53,me.shieldTicks>=5?-.14:-.56,-.71);shieldModel.rotation.x=me.shieldTicks>=5?0:-.18;
  }else{camera.position.set(19,14,23);camera.lookAt(0,0,0);avatar.position.set(0,0,0);avatar.rotation.y=.6;weaponRoot.visible=shieldModel.visible=false;}
  if(started)weaponRoot.visible=shieldModel.visible=true;
  if(now>noticeUntil)$('#notice').textContent='';$('#hit-marker').style.opacity=now<hitUntil?'1':'0';if(now-hudSince>100){hud();hudSince=now;}

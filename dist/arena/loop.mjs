@@ -6,7 +6,7 @@ export function createFrameLoop({update,render,step=50,maxDelta=150,requestFrame
   const delta=Math.max(0,Math.min(maxDelta,time-previous));previous=time;
   accumulator+=delta;
   while(accumulator+1e-8>=step){update();accumulator-=step;}
-  render(time,delta);
+  render(time,delta,Math.max(0,accumulator/step));
   if(active)handle=requestFrame(frame);
  }
  return {
