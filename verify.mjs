@@ -16,5 +16,4 @@ assert.equal(result.unlocked,true);assert.equal(result.locked,false);assert.equa
 assert.equal(JSON.parse(values.get('levelup-progress')).completed.length,1,'Persist one award per quest');
 function reachable(width,height,wallIndices){const walls=new Set(wallIndices),seen=new Set([0]),queue=[0];while(queue.length){const p=queue.shift();for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const x=p%width+dx,y=Math.floor(p/width)+dy,n=y*width+x;if(x>=0&&x<width&&y>=0&&y<height&&!walls.has(n)&&!seen.has(n)){seen.add(n);queue.push(n)}}}return seen}
 const maze=reachable(6,6,[2,8,10,12,14,16,20,22,25,26,28]);assert(maze.has(35),'Robot can reach flag');
-const arenaWalls=[14,15,20,21,26,32,38,39,44,45,50,56,62,63,68,69];assert.equal(reachable(12,7,arenaWalls).size,84-arenaWalls.length,'Every crystal spawn is reachable');
-console.log('PASS: translation coverage, XP deduplication, persistence, reward locks, Uzbek input normalization, local dates, maze route, arena connectivity.');
+console.log('PASS: translation coverage, XP deduplication, persistence, reward locks, Uzbek input normalization, local dates, maze route.');

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#8cbbd8"><title>Block Duel — LevelUp</title><link rel="stylesheet" href="arena.css"></head>
+<body>
+ <canvas id="scene" aria-label="3D block duel arena" tabindex="-1"></canvas>
+ <header class="topbar"><a id="back" href="../">← <span data-i="back">Back to learning</span></a><span>LEVELUP / <b>BLOCK DUEL</b></span><span id="performance">20 TPS</span></header>
+ <div id="hud" hidden>
+  <div class="match"><span id="opponent-name"></span><div class="enemy-track"><i id="enemy-health"></i></div><span id="enemy-health-value">20 / 20</span><span id="score">0 : 0</span><span id="round-time">0:00</span></div>
+  <div id="crosshair" aria-hidden="true">+</div><div id="hit-marker" aria-hidden="true">×</div><div id="notice" role="status"></div>
+  <div class="hud-bottom"><div class="vitals"><div id="armor" aria-label="Full diamond armor">◆ ◆ ◆ ◆ ◆ ◆ ◆ ◆ ◆ ◆</div><div id="hearts" aria-label="Health"></div><div id="absorption"></div></div><div class="charge-track"><i id="charge"></i></div><span id="charge-label"></span><div class="hotbar"><button data-slot="0"><small>1</small><span class="item sword">⚔</span><b data-i="sword">Sword</b></button><button data-slot="1"><small>2</small><span class="item axe">🪓</span><b data-i="axe">Axe</b></button><button data-slot="2"><small>3</small><span class="item apple">●</span><b><span data-i="apple">Golden apple</span> <span id="apple-count">2</span></b></button><div class="empty-slot"></div><div class="empty-slot"></div><div class="empty-slot"></div><div class="empty-slot"></div><div class="empty-slot"></div><div class="empty-slot"></div></div><span id="shield-state"></span></div>
+  <button id="pause" data-i="pause">Esc · Pause</button><span id="look-help" data-i="drag">Drag to look · arrow keys also work</span>
+ </div>
+ <main id="menu"><section class="panel">
+  <div class="eyebrow"><span data-i="reward">MATH REWARD / 03</span><select id="language" aria-label="Language"><option value="uz">UZ</option><option value="en">EN</option><option value="ru">RU</option></select></div>
+  <h1>BLOCK<br><span>DUEL.</span></h1><p id="menu-description" data-i="intro"></p>
+  <div id="locked" hidden><p data-i="locked"></p><a class="primary" href="../?world=math" data-i="unlock"></a></div>
+  <div id="options"><label><span data-i="mode">Opponent</span><select id="mode"><option value="bot" data-i="bot"></option><option value="dummy" data-i="dummy"></option><option value="peer" data-i="peer"></option></select></label>
+   <div id="peer-panel" hidden><p data-i="lanHelp"></p><div class="peer-actions"><button id="host" data-i="host"></button><button id="join" data-i="join"></button></div><label><span data-i="incoming"></span><textarea id="incoming" rows="2" maxlength="64000" spellcheck="false"></textarea></label><button id="accept" data-i="accept" hidden></button><label id="outgoing-wrap" hidden><span data-i="outgoing"></span><textarea id="outgoing" rows="2" readonly spellcheck="false"></textarea><button id="copy" data-i="copy"></button></label><p id="peer-state" role="status"></p></div>
+   <div class="settings"><label><span data-i="quality"></span><select id="quality"><option value="low" data-i="low"></option><option value="balanced" data-i="balanced"></option></select></label><label><span data-i="sensitivity"></span><input id="sensitivity" type="range" min="0.5" max="3" step="0.1" value="1.3"></label></div>
+   <button id="start" class="primary" data-i="start"></button>
+   <details><summary data-i="controls"></summary><dl><dt>W A S D</dt><dd data-i="move"></dd><dt>R / Shift</dt><dd data-i="sprintSneak"></dd><dt>Space</dt><dd data-i="jump"></dd><dt data-i="leftClick"></dt><dd data-i="attack"></dd><dt data-i="rightClick"></dt><dd data-i="shieldApple"></dd><dt>1 / 2 / 3</dt><dd data-i="slots"></dd><dt>F / J</dt><dd data-i="keyboard"></dd></dl><p data-i="combatHelp"></p></details>
+  </div><p class="footnote" data-i="original"></p>
+ </section><div class="scene-caption"><span data-i="grounds">01 / THE TRAINING GROUNDS</span><b data-i="caption"></b></div></main>
+ <div id="fatal" hidden role="alert"></div>
+ <script type="module" src="game.mjs"></script>
+</body></html>
