@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import { POLICY, advancePractice, canRedeem, passRemaining, initialAccount } from './dist/credit-policy.mjs';
+import { questionBank } from './firebase/question-bank.mjs';
+import { creditCopy } from './dist/credits-ui.mjs';
+assert.equal(POLICY.passCost/POLICY.perRound*POLICY.roundSeconds,600,'A pass requires ten minutes at the maximum legal earn rate');
+assert.equal(canRedeem({credits:99}),false);assert.equal(canRedeem({credits:100}),true);
+assert.equal(canRedeem(null),false);assert.equal(passRemaining({role:'developer'}),Infinity);
+assert.equal(canRedeem({role:'developer',credits:0}),true,'Developer does not need pretend/spendable credits');
+const timestamp=n=>({toMillis:()=>n});
+assert.equal(passRemaining({passUntil:timestamp(300000)},0),300);
+assert.equal(passRemaining({passUntil:timestamp(300000)},300001),0);
+assert.equal(canRedeem({credits:0,passUntil:timestamp(300000)},0),true,'An active pass costs nothing to resume');
+assert.equal(advancePractice(1000,1000,false),1000,'No background earning');
+assert.equal(advancePractice(0,60000,true),1500,'Sleeping frames cannot collect practice time');
+assert.equal(advancePractice(59000,1500,true),60000);
+assert.equal(initialAccount('server-time').credits,0);
+assert.equal(questionBank.length,32);assert.equal(new Set(questionBank.map(q=>q.id)).size,32);
+for(const q of questionBank){assert.equal(q.id,'q'+q.index);assert(q.answer);for(const l of ['en','uz','ru'])for(const field of ['title','lesson','prompt'])assert(q.question[field][l]);}
+for(const key of Object.keys(creditCopy.en))for(const l of ['uz','ru'])assert(creditCopy[l][key],l+':'+key);
+console.log('PASS: 10-minute target, credit threshold, active-pass reuse, expiration, developer bypass, active practice timing, question bank and three languages.');

@@ -1,4 +1,6 @@
 import * as THREE from './vendor/three.module.js';
+import * as creditAccount from '../account.mjs';
+import { creditCopy } from '../credits-ui.mjs';
 import {TICK,player,emptyInput,tickPlayer,attack,charge,botInput,separatePlayers,sanitizeInput,SOLIDS} from './physics.mjs';
 import {DuelPeer} from './peer.mjs';
 import {createMouseCapture} from './mouse.mjs';
@@ -33,7 +35,7 @@ for(const [l,values] of Object.entries({
 let lang=new URLSearchParams(location.search).get('lang');try{lang=lang||localStorage.getItem('levelup-language');}catch{}if(!COPY[lang]){const zone=Intl.DateTimeFormat().resolvedOptions().timeZone;lang=/Tashkent|Samarkand/.test(zone)?'uz':navigator.language?.startsWith('ru')?'ru':'en';}const t=k=>COPY[lang][k]||k;
 function translate(){document.documentElement.lang=lang;$$('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));$('#language').value=lang;$('#armor').ariaLabel=t('armor');$('#scene').ariaLabel=t('scene');$('#back').href='../?lang='+lang;if(renderer){$('#graphics-status').textContent=t(quality==='high'?'highDetails':quality==='balanced'?'balancedDetails':'lowDetails');if(!running)$('#performance').textContent=t(quality==='high'?'high':quality==='balanced'?'balanced':'low')+' · VSync';}updateStart();}
 $('#language').onchange=e=>{lang=e.target.value;const url=new URL(location.href);url.searchParams.set('lang',lang);history.replaceState(null,'',url);try{localStorage.setItem('levelup-language',lang);}catch{}translate();};
-let unlocked=false;try{unlocked=JSON.parse(localStorage.getItem('levelup-progress')||'{}').completed?.some(x=>['math-linear','math-quadratic'].includes(x))||false;}catch{}
+let unlocked=false;if(!creditAccount.configured){try{unlocked=JSON.parse(localStorage.getItem('levelup-progress')||'{}').completed?.some(x=>['math-linear','math-quadratic'].includes(x))||false;}catch{}}
 $('#locked').hidden=unlocked;$('#options').hidden=!unlocked;
 let renderer,scene,camera,avatar,weaponRoot,shieldModel,swordModel,axeModel,appleModel,graphicsContext,highGraphics=null,quality='low',qualityRequest=0;
 let players=[player(),player(1)],localId=0,mode='bot',running=false,started=false,paused=false,finished=false,roundEnded=false,matchEnded=false,ticks=0,scores=[0,0],roundTicks=0,round=1;
@@ -85,7 +87,7 @@ function event(e){if(!e||['miss','immune'].includes(e.kind))return;if(e.id===loc
 function setPlaying(value){running=value;paused=!value;document.body.classList.toggle('playing',value);$('#hud').hidden=!value;if(!value)$('#input-state').textContent='';keys.clear();mouseShield=false;attackPending=false;updateStart();}
 function pause(){if(!started||roundEnded)return;entryRequest++;capturePending=false;setPlaying(false);$('#capture-gate').hidden=true;$('#menu').inert=false;mouseCapture.cancel();$('#menu-description').textContent=t('paused');if(mode==='peer'){if(localId===0)network.send(snapshot());else network.send({type:'pause'});}}
 function resetRound(newMatch=false){if(newMatch){scores=[0,0];round=1;matchEnded=false;}players=[player(),player(1)];ticks=0;roundTicks=0;roundEnded=false;finished=false;started=true;remoteInput=emptyInput();remoteSeen=performance.now();yaw=players[localId].yaw;pitch=0;slot=0;}
-function play(){if(!started||roundEnded){resetRound(!started||matchEnded);if(mode==='peer'&&localId===0)network.send({type:'start',players,scores,round});}$('#capture-gate').hidden=true;$('#menu').inert=false;setPlaying(true);canvas.focus();if(dragControls)$('#input-state').textContent=t('dragMode');}
+function play(){if(!unlocked)return;if(!started||roundEnded){resetRound(!started||matchEnded);if(mode==='peer'&&localId===0)network.send({type:'start',players,scores,round});}$('#capture-gate').hidden=true;$('#menu').inert=false;setPlaying(true);canvas.focus();if(dragControls)$('#input-state').textContent=t('dragMode');}
 function captureGate(failed=false,key='capturePrompt'){
  const error=mouseCapture.error;
  if(failed)key=error?.name==='WrongDocumentError'?'captureFocus':['NotAllowedError','AbortError'].includes(error?.name)?'capturePermission':error?.name==='SecurityError'?'captureSecurity':error?.name==='NotSupportedError'?'captureUnsupported':'captureUnknown';
@@ -120,7 +122,7 @@ function roundEnd(){roundEnded=true;running=false;const winner=players[0].health
 function snapshot(){return {type:'state',players,scores,round,roundTicks,paused:!running,tick:ticks};}
 function validPlayers(ps){return Array.isArray(ps)&&ps.length===2&&ps.every(p=>p&&['x','y','z','yaw','pitch','health','vx','vy','vz','charge'].every(k=>Number.isFinite(p[k]))&&Math.abs(p.x)<100&&Math.abs(p.z)<100&&p.y>-20&&p.y<100&&p.health>=0&&p.health<=20);}
 function peerMessage(message){
- if(mode!=='peer'||!message||typeof message!=='object')return;
+ if(!unlocked||mode!=='peer'||!message||typeof message!=='object')return;
  if(localId===0&&message.type==='input'){remoteInput=sanitizeInput(message.input);remoteSeen=performance.now();return;}
  if(localId===0&&message.type==='pause'){pause();return;}
  if(localId!==1)return;
@@ -174,4 +176,24 @@ function frame(now,delta,partialTick=0){
 }
 window.addEventListener('resize',()=>{if(!renderer)return;renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();if(highGraphics?.active)highGraphics.resize();});
 canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();pause();fatal('noWebGL');});
+COPY.en.reward='LEARNING REWARD / 100 CREDITS';COPY.uz.reward='BILIM MUKOFOTI / 100 KREDIT';COPY.ru.reward='НАГРАДА ЗА УЧЁБУ / 100 КРЕДИТОВ';
+let creditClockReady=false,creditClockPending=false,creditUser=null,passWasActive=false,creditClockRetry=0;
+function updateCreditGate(){
+ if(!creditAccount.configured)return;
+ const status=creditAccount.accountState(),words=creditCopy[lang]||creditCopy.en;
+ if(status.user?.uid!==creditUser){creditUser=status.user?.uid||null;creditClockReady=false;creditClockPending=false;creditClockRetry=0;}
+ if(status.account&&!status.error&&!creditClockReady&&!creditClockPending&&performance.now()>=creditClockRetry){
+  creditClockPending=true;creditClockRetry=performance.now()+10000;const uid=creditUser;
+  creditAccount.syncClock().then(()=>{if(uid===creditUser)creditClockReady=true;}).catch(()=>{}).finally(()=>{if(uid===creditUser){creditClockPending=false;updateCreditGate();}});
+ }
+ const seconds=creditClockReady&&!status.error?creditAccount.remaining():0;
+ unlocked=!!status.user&&!!status.account&&seconds>0&&!status.error;
+ if(!unlocked&&(running||capturePending||!$('#capture-gate').hidden)){pause();cancelEntry();setPlaying(false);$('#capture-gate').hidden=true;$('#menu').inert=false;network?.close();peerReady=false;}
+ $('#locked').hidden=true;$('#credit-gate').hidden=unlocked;$('#options').hidden=!unlocked;
+ $('#credit-gate-message').textContent=status.loading||creditClockPending?words.loading:status.error||status.account&&!creditClockReady?words.error:passWasActive?words.expired:words.locked;
+ $('#credit-gate-link').textContent=words.back+' →';$('#credit-gate-link').href='../?credits=1&lang='+lang;
+ $('#pass-time').hidden=!unlocked;$('#pass-time').textContent=words.time+': '+(seconds===Infinity?'∞':Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0'));
+ if(unlocked)passWasActive=true;updateStart();
+}
+if(creditAccount.configured){creditAccount.subscribe(updateCreditGate);creditAccount.initializeAccount().catch(()=>{});const creditInterval=setInterval(updateCreditGate,1000);window.addEventListener('pagehide',()=>clearInterval(creditInterval));}
 translate();try{if(buildScene()){let preset='low';try{const saved=localStorage.getItem('levelup-graphics');if(['low','balanced','high'].includes(saved))preset=saved;}catch{}setQuality(preset);frameLoop=createFrameLoop({update:simTick,render:frame,step:TICK});if(!document.hidden)frameLoop.start();}}catch(err){console.error(err);fatal('error');}

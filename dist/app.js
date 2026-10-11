@@ -27,13 +27,13 @@ const allowedQuestIds=['coding-python','coding-cpp','coding-csharp','coding-wind
 const initial=read('levelup-progress',{});
 const state={completed:Array.isArray(initial.completed)?[...new Set(initial.completed.filter(x=>allowedQuestIds.includes(x)))]:[],days:Array.isArray(initial.days)?[...new Set(initial.days.filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x)))]:[]};
 function detectLanguage(){const zone=Intl.DateTimeFormat().resolvedOptions().timeZone;if(['Asia/Tashkent','Asia/Samarkand'].includes(zone))return 'uz';const languages=navigator.languages||[navigator.language];for(const l of languages){if(l?.startsWith('uz'))return 'uz';if(l?.startsWith('ru'))return 'ru';if(l?.startsWith('en'))return 'en'}return 'en'}
-let lang=read('levelup-language',null);if(!copy[lang])lang=detectLanguage();
+let lang=typeof location!=='undefined'?new URLSearchParams(location.search).get('lang'):null;lang=lang||read('levelup-language',null);if(!copy[lang])lang=detectLanguage();
 const t=k=>copy[lang][k]||copy.en[k]||k;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function localDay(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function save(){write('levelup-progress',state)}
 function award(id){const fresh=!state.completed.includes(id);if(fresh)state.completed.push(id);const day=localDay();if(!state.days.includes(day))state.days.push(day);save();renderStats();return fresh}
-function unlocked(world){return state.completed.some(id=>id.startsWith(world+'-'))}
+function unlocked(world){return (typeof window!=='undefined'&&window.levelupCredits?.isDeveloper())||state.completed.some(id=>id.startsWith(world+'-'))}
 
 function renderStats(){
   const xp=state.completed.length*50,level=Math.floor(xp/100)+1;
@@ -68,6 +68,7 @@ function render(){
   $('.sunset-section img').alt=t('sunsetAlt');
   $('#world-grid').innerHTML=worlds.map((w,i)=>`<article class="subject subject-${w.id}"><button class="subject-button" data-world="${w.id}" aria-labelledby="subject-${w.id}-title" aria-describedby="subject-${w.id}-desc"><div class="subject-body"><div class="subject-top"><span class="subject-number">0${i+1}</span><span class="subject-tags">${w.tags.map(tag=>esc(copy.en[tag]?t(tag):tag)).join(' / ')}</span></div><div class="subject-main"><div class="subject-copy"><h3 id="subject-${w.id}-title">${t(w.id)}</h3><p id="subject-${w.id}-desc">${t(w.desc)}</p></div><div class="subject-visual" aria-hidden="true">${subjectArt(w.id)}</div></div><div class="subject-reward"><span>${t(w.id==='typing'?'subjectTypingGame':'subjectGame')}</span><strong>${t(w.reward)}</strong></div></div><div class="subject-action"><span>${t(w.id==='typing'?'subjectTypeStart':'subjectStart')}</span><span class="subject-arrow" aria-hidden="true">↗</span></div></button></article>`).join('');
   renderStats();
+  if(typeof window!=='undefined')window.levelupCredits?.render();
 }
 let cleanup=()=>{},returnFocus=null;
 const modal=$('#modal');
@@ -78,7 +79,7 @@ $('#language').onchange=e=>{lang=e.target.value;write('levelup-language',lang);i
 document.addEventListener('click',e=>{const world=e.target.closest('button[data-world]');if(world){openWorld(world.dataset.world);return}const action=e.target.closest('[data-action]')?.dataset.action;if(action==='typing')openTyping();if(action==='quests')openQuests();if(action==='achievements')openAchievements();if(action==='arena')openArena()});
 function openWorld(id){if(id==='typing')return openTyping();if(id==='coding')return codingLesson();if(id==='office')return officeLesson();if(id==='math')return mathLesson()}
 function tabs(entries,current,callback){const row=$('.tab-row');if(!row)return;row.innerHTML=entries.map(([id,name])=>`<button class="${id===current?'selected':''}" data-tab="${id}" aria-pressed="${id===current}">${name}${state.completed.includes(`${row.dataset.world}-${id}`)?' ✓':''}</button>`).join('');row.querySelectorAll('button').forEach(b=>b.onclick=()=>callback(b.dataset.tab))}
-function lessonShell(world,title,intro,html){show('lesson',`<h2 id="modal-title">${title}</h2><p>${intro}</p><div class="tab-row" data-world="${world}" aria-label="${t('choose')}"></div><div id="lesson-body">${html}</div><div id="unlock-area"></div>`);if(unlocked(world))rewardBar(world)}
+function lessonShell(world,title,intro,html){const credits=typeof window!=='undefined'&&window.levelupCredits?.enabled?window.levelupCredits:null;show('lesson',`<h2 id="modal-title">${title}</h2><p>${intro}</p>${credits?credits.lessonOffer():''}<div class="tab-row" data-world="${world}" aria-label="${t('choose')}"></div><div id="lesson-body">${html}</div><div id="unlock-area"></div>`);if(credits)$('#lesson-credits').onclick=()=>credits.openEarn(world);if(unlocked(world))rewardBar(world)}
 function feedback(world,id,valid){const f=$('#feedback');f.className='feedback '+(valid?'success':'error');if(valid){f.textContent=award(id)?t('correct'):t('againCorrect');rewardBar(world)}else f.textContent=t('incorrect')}
 function rewardBar(world){const area=$('#unlock-area');if(area){area.innerHTML=`<div class="unlocked"><span>✦ ${t('unlocked')}</span><button class="primary" id="reward-play">${t('openGame')} →</button></div>`;$('#reward-play').onclick=()=>({coding:openMaze,office:openMemory,math:openArena}[world])()}}
 function answerForm(){return `<form class="answer-form" id="answer-form"><input id="answer" aria-label="${t('answer')}" placeholder="${t('answer')}" autocomplete="off" required maxlength="100"><button class="primary" type="submit">${t('check')} →</button></form><div id="feedback" class="feedback" role="status"></div>`}
@@ -123,8 +124,10 @@ const arenaCopy={
  ru:{block:'Блочная 3D-дуэль',arenaTitle:'Следующий раунд — в 3D.',arenaHelp:'Дуэли от первого лица: перезарядка ударов, щиты, контратаки топором, инерция прыжков и критические удары. Тренируйся с ботом или подключай друга в одной локальной сети.',arenaNote:'Арена загружается отдельно. По умолчанию выбрана лёгкая графика для школьных ПК.',enter3d:'Войти на 3D-арену'}
 };for(const key of Object.keys(copy))Object.assign(copy[key],arenaCopy[key]);
 function openArena(){
+ if(typeof window!=='undefined'&&window.levelupCredits?.enabled)return window.levelupCredits.openArena();
  if(!unlocked('math')){show('arena',`<h2 id="modal-title">${t('block')}</h2><p>${t('locked')}</p><div class="game-buttons"><button class="primary" data-world="math">${t('goMath')} →</button></div>`);return;}
  show('arena',`<h2 id="modal-title">${t('arenaTitle')}</h2><p>${t('arenaHelp')}</p><div class="game-buttons"><a class="primary arena-link" href="arena/?lang=${lang}">${t('enter3d')} →</a></div><p class="notice">${t('arenaNote')}</p>`);
 }
 if(typeof location!=='undefined'&&new URLSearchParams(location.search).get('world')==='math')setTimeout(mathLesson,0);
+if(typeof window!=='undefined')import('./credits-ui.mjs').then(({installCredits})=>installCredits({show,getLanguage:()=>lang,registerCleanup:fn=>{cleanup=fn}})).catch(error=>console.error('Account UI unavailable',error));
 render();
