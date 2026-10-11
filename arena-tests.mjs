@@ -1,13 +1,27 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {player,emptyInput,tickPlayer,attack,armorDamage,charge,sanitizeInput,SOLIDS} from './dist/arena/physics.mjs';
+import {player,emptyInput,tickPlayer,attack,armorDamage,charge,cooldownSeconds,sanitizeInput,SOLIDS} from './dist/arena/physics.mjs';
 const advance=(p,i,n)=>{for(let k=0;k<n;k++)tickPlayer(p,i);};
 let p=player(),i=emptyInput();i.forward=1;advance(p,i,30);assert(p.z< -11,'Walking moves forward');assert(p.z> -13.7,'Wall collision stops player');
 p=player();i=emptyInput();i.jump=true;let apex=0;for(let k=0;k<10;k++){tickPlayer(p,i);apex=Math.max(apex,p.y);}assert(apex>1.2&&apex<1.3,'Jump arc reaches Minecraft-scale height');i.jump=false;advance(p,i,20);assert(Math.abs(p.y)<1e-6&&p.ground,'Land on the floor');
 p=player();i=emptyInput();i.forward=1;i.sprint=true;i.jump=true;tickPlayer(p,i);assert(Math.abs(p.z+6)>.3&&Math.abs(p.vz)>.15,'Sprint jump preserves a directional impulse');
 const pair=()=>{const a=player(),b=player(1);a.z=0;a.yaw=0;b.z=-2;b.yaw=Math.PI;return [a,b];};
 let [a,b]=pair();let hit=attack(a,b);assert.equal(hit.kind,'hit');assert(Math.abs(hit.damage-1.89)<1e-8);const hp=b.health;attack(a,b);assert.equal(b.health,hp,'Spam cannot bypass damage immunity');assert(charge(a)<.05,'Attacks reset cooldown');
+for(const [slot,wait] of [[0,13],[1,20]]){
+ [a,b]=pair();a.slot=slot;assert.equal(attack(a,b).kind,'hit');const health=b.health;
+ assert.equal(cooldownSeconds(a),wait/20,'Weapon reports its complete cooldown');
+ for(let elapsed=1;elapsed<wait;elapsed++){
+  advance(a,{...emptyInput(),slot},1);
+  assert.equal(attack(a,b),null,'Rapid clicks cannot produce an early swing');
+  assert.equal(a.charge,elapsed,'Ignored clicks do not restart the cooldown');
+  assert.equal(b.health,health,'An early click cannot damage the opponent');
+ }
+ advance(a,{...emptyInput(),slot},1);b.hurt=0;
+ assert.equal(cooldownSeconds(a),0);assert.equal(attack(a,b).kind,'hit','Swing becomes available at expiry');
+}
+[a,b]=pair();a.z=4;assert.equal(attack(a,b).kind,'miss');a.z=0;assert.equal(attack(a,b),null,'Missed swings also start the cooldown');
+[a,b]=pair();attack(a,b);advance(a,{...emptyInput(),slot:1},1);assert.equal(cooldownSeconds(a),1);assert.equal(attack(a,b),null,'Swapping to the axe cannot bypass cooldown');advance(a,emptyInput(),1);assert.equal(cooldownSeconds(a),.65);assert.equal(attack(a,b),null,'Swapping back to the sword starts its cooldown');
 [a,b]=pair();a.ground=false;a.y=.3;a.vy=-.1;a.fall=.1;a.pitch=-.15;hit=attack(a,b);assert.equal(hit.kind,'crit');assert(hit.damage>2.7,'Falling crit increases armored damage');
 [a,b]=pair();b.shieldTicks=5;assert.equal(attack(a,b).kind,'block');assert.equal(b.health,20);a.slot=1;a.charge=30;assert.equal(attack(a,b).kind,'disable');assert.equal(b.shieldDisabled,100);
 [a,b]=pair();b.shieldTicks=5;b.yaw=0;assert.equal(attack(a,b).kind,'hit','Shield cannot block from behind');

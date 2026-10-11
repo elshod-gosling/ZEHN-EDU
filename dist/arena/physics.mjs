@@ -1,6 +1,6 @@
 // Fixed 20 Hz simulation. Units are blocks and blocks per tick.
 export const TICK=50, REACH=3;
-export const WEAPONS=[{name:'sword',damage:7,cooldown:12.5},{name:'axe',damage:9,cooldown:20},{name:'apple',damage:1,cooldown:5}];
+export const WEAPONS=[{name:'sword',damage:7,cooldown:13},{name:'axe',damage:9,cooldown:20},{name:'apple',damage:1,cooldown:5}];
 export const SOLIDS=[[-15,-3,-15,15,0,15],[-15,0,-15,-14,2,15],[14,0,-15,15,2,15],[-14,0,-15,14,2,-14],[-14,0,14,14,2,15],...[-9,9].flatMap(x=>[-9,9].map(z=>[x,0,z,x+1,3,z+1])),[-7,0,-1,-6,1,1],[6,0,-1,7,1,1]];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const emptyInput=()=>({forward:0,strafe:0,yaw:0,pitch:0,jump:false,sprint:false,sneak:false,shield:false,attack:false,slot:0});
@@ -33,10 +33,11 @@ export function tickPlayer(p,raw,solids=SOLIDS){
 }
 export function direction(p){const c=Math.cos(p.pitch);return [-Math.sin(p.yaw)*c,Math.sin(p.pitch),-Math.cos(p.yaw)*c];}
 export function rayBox(origin,dir,b){let near=0,far=Infinity;for(let k=0;k<3;k++){if(Math.abs(dir[k])<1e-8){if(origin[k]<b[k]||origin[k]>b[k+3])return Infinity;}else{let a=(b[k]-origin[k])/dir[k],c=(b[k+3]-origin[k])/dir[k];if(a>c)[a,c]=[c,a];near=Math.max(near,a);far=Math.min(far,c);if(near>far)return Infinity;}}return near;}
-export function charge(p){return Math.min(1,(p.charge+.5)/WEAPONS[p.slot].cooldown);}
+export function charge(p){return Math.min(1,p.charge/WEAPONS[p.slot].cooldown);}
+export function cooldownSeconds(p){return Math.max(0,WEAPONS[p.slot].cooldown-p.charge)*TICK/1000;}
 export function armorDamage(damage,armor=20,toughness=8){return damage*(1-clamp(armor-damage/(2+toughness/4),armor*.2,20)/25);}
 export function attack(a,b,solids=SOLIDS){
- if(a.health<=0||b.health<=0||a.shieldTicks>0||a.use>0)return null;
+ if(a.health<=0||b.health<=0||a.shieldTicks>0||a.use>0||a.slot<2&&charge(a)<1)return null;
  const power=charge(a),weapon=WEAPONS[a.slot],critical=power>.9&&!a.ground&&a.vy<0&&a.fall>0&&!a.sprint;
  a.charge=0;a.swing=5;
  const origin=[a.x,a.y+1.62,a.z],dir=direction(a),distance=rayBox(origin,dir,box(b));

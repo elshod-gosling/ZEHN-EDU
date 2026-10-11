@@ -5,3 +5,4 @@
 #menu{align-items:safe center}
 .vsync-note{font-size:10px;color:#677258;border-left:2px solid #839660;padding-left:9px;margin:8px 0 14px}.capture-panel #capture-detail{font:11px/1.5 monospace;overflow-wrap:anywhere;background:#e8e7df;border-left:3px solid #987243;padding:10px;color:#534b3f}
 #capture-test{display:block;color:#405331;font-size:13px;text-decoration:underline;margin:8px 0 18px}#capture-test[hidden]{display:none}
+#attack-cooldown{width:160px;height:9px;border:1px solid #d9ebba;box-shadow:0 1px 5px #1119}#attack-cooldown i{background:#b8f365}#attack-cooldown.cooling{border-color:#e5b469}#attack-cooldown.cooling i{background:#ffb75b}#charge-label{font-size:12px;font-weight:700;bottom:126px;padding:3px 7px;background:#172615cf;border-radius:3px}

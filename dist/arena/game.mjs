@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import {TICK,player,emptyInput,tickPlayer,attack,charge,botInput,separatePlayers,sanitizeInput,SOLIDS} from './physics.mjs';
+import {TICK,player,emptyInput,tickPlayer,attack,charge,cooldownSeconds,botInput,separatePlayers,sanitizeInput,SOLIDS} from './physics.mjs';
 import {DuelPeer} from './peer.mjs';
 import {createMouseCapture} from './mouse.mjs';
 import {createFrameLoop} from './loop.mjs';
@@ -24,6 +24,11 @@ for(const [l,values] of Object.entries({
  en:{captureTest:'Test mouse lock without the game ↗',captureInternal:'The browser returned an internal mouse-capture error. Run the simple test below to check whether the same error happens without the game.'},
  uz:{captureTest:'O‘yinsiz qulflashni sinash ↗',captureInternal:'Brauzer sichqonchani qulflashda ichki xato qaytardi. Xato o‘yinsiz ham yuz berishini tekshirish uchun pastdagi oddiy sinovni och.'},
  ru:{captureTest:'Проверить захват без игры ↗',captureInternal:'Браузер вернул внутреннюю ошибку захвата мыши. Открой простую проверку ниже, чтобы узнать, возникает ли та же ошибка без игры.'}
+}))Object.assign(COPY[l],values);
+for(const [l,values] of Object.entries({
+ en:{cooldown:'Cooldown',cooldownHelp:'Sword: 0.65 s. Axe: 1 s. Wait for Ready before swinging again. Extra clicks during cooldown are ignored.'},
+ uz:{cooldown:'Qayta zarbagacha',cooldownHelp:'Qilich: 0,65 soniya. Bolta: 1 soniya. Yana zarba berishdan oldin «Tayyor» yozuvini kut. Kutish vaqtida bosish zarba bermaydi.'},
+ ru:{cooldown:'Перезарядка',cooldownHelp:'Меч: 0,65 с. Топор: 1 с. Перед следующим ударом дождись «Готово». Щелчки во время перезарядки игнорируются.'}
 }))Object.assign(COPY[l],values);
 let lang=new URLSearchParams(location.search).get('lang');try{lang=lang||localStorage.getItem('levelup-language');}catch{}if(!COPY[lang]){const zone=Intl.DateTimeFormat().resolvedOptions().timeZone;lang=/Tashkent|Samarkand/.test(zone)?'uz':navigator.language?.startsWith('ru')?'ru':'en';}const t=k=>COPY[lang][k]||k;
 function translate(){document.documentElement.lang=lang;$$('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));$('#language').value=lang;$('#armor').ariaLabel=t('armor');$('#scene').ariaLabel=t('scene');$('#back').href='../?lang='+lang;if(renderer){$('#graphics-status').textContent=t(quality==='high'?'highDetails':quality==='balanced'?'balancedDetails':'lowDetails');if(!running)$('#performance').textContent=t(quality==='high'?'high':quality==='balanced'?'balanced':'low')+' · VSync';}updateStart();}
@@ -144,7 +149,17 @@ function simTick(){if(!running)return;const input=readInput();attackPending=fals
  if(mode==='peer'){remoteInput.attack=false;network.send(snapshot());}
  ticks++;roundTicks++;if(players.some(p=>p.health<=0)||roundTicks>=3600)roundEnd();
 }
-function hud(){const p=players[localId],b=players[1-localId];$('#opponent-name').textContent=t(mode==='peer'?'friend':mode);$('#enemy-health').style.width=Math.max(0,b.health/20*100)+'%';$('#enemy-health-value').textContent=b.health.toFixed(1)+' / 20';$('#score').textContent=scores[localId]+' : '+scores[1-localId];const sec=Math.floor(roundTicks/20);$('#round-time').textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');$('#hearts').innerHTML=Array.from({length:10},(_,j)=>`<span class="heart ${p.health>=j*2+2?'':p.health>j*2?'half':'empty'}">♥</span>`).join('');$('#hearts').ariaLabel=`${Math.ceil(p.health)} / 20`;$('#absorption').textContent='♥'.repeat(Math.ceil(p.absorption/2));$('#charge').style.width=charge(p)*100+'%';$('#charge-label').textContent=t(charge(p)>.9?'ready':'charging');$('#apple-count').textContent=p.apples;$('#shield-state').textContent=p.use?t('eating')+' '+Math.round(p.use/32*100)+'%':p.shieldDisabled?t('disabled')+' '+(p.shieldDisabled/20).toFixed(1)+t('seconds'):p.shieldTicks>=5?t('shield'):'';$$('[data-slot]').forEach(b=>b.classList.toggle('selected',Number(b.dataset.slot)===slot));$('#look-help').hidden=!!document.pointerLockElement;}
+function updateCooldown(p){
+ const remaining=cooldownSeconds(p),weapon=p.slot<2,track=$('#attack-cooldown');
+ track.hidden=$('#charge-label').hidden=!weapon;
+ track.classList.toggle('cooling',remaining>0);
+ track.setAttribute('aria-label',t('cooldown'));
+ track.setAttribute('aria-valuenow',Math.round(charge(p)*100));
+ track.setAttribute('aria-valuetext',remaining>0?remaining.toFixed(2)+' '+t('seconds'):t('ready'));
+ $('#charge').style.width=charge(p)*100+'%';
+ $('#charge-label').textContent=t(p.slot===0?'sword':'axe')+' · '+(remaining>0?t('cooldown')+' '+remaining.toFixed(2)+' '+t('seconds'):t('ready'));
+}
+function hud(){const p=players[localId],b=players[1-localId];$('#opponent-name').textContent=t(mode==='peer'?'friend':mode);$('#enemy-health').style.width=Math.max(0,b.health/20*100)+'%';$('#enemy-health-value').textContent=b.health.toFixed(1)+' / 20';$('#score').textContent=scores[localId]+' : '+scores[1-localId];const sec=Math.floor(roundTicks/20);$('#round-time').textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');$('#hearts').innerHTML=Array.from({length:10},(_,j)=>`<span class="heart ${p.health>=j*2+2?'':p.health>j*2?'half':'empty'}">♥</span>`).join('');$('#hearts').ariaLabel=`${Math.ceil(p.health)} / 20`;$('#absorption').textContent='♥'.repeat(Math.ceil(p.absorption/2));updateCooldown(p);$('#apple-count').textContent=p.apples;$('#shield-state').textContent=p.use?t('eating')+' '+Math.round(p.use/32*100)+'%':p.shieldDisabled?t('disabled')+' '+(p.shieldDisabled/20).toFixed(1)+t('seconds'):p.shieldTicks>=5?t('shield'):'';$$('[data-slot]').forEach(b=>b.classList.toggle('selected',Number(b.dataset.slot)===slot));$('#look-help').hidden=!!document.pointerLockElement;}
 let frames=0,fpsSince=performance.now(),hudSince=0,visual=[{x:0,y:0,z:-6},{x:0,y:0,z:6}];
 function frame(now,delta){
  const renderDelta=Math.min(100,delta);
