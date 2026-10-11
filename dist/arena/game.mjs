@@ -10,7 +10,7 @@ const COPY={
 for(const [l,values] of Object.entries({en:{grounds:'01 / THE TRAINING GROUNDS',armor:'Full diamond armor',scene:'3D block duel arena'},uz:{grounds:'01 / MASHQ MAYDONI',armor:'To‘liq olmos zirh',scene:'3D blokli duel maydoni'},ru:{grounds:'01 / ТРЕНИРОВОЧНАЯ АРЕНА',armor:'Полная алмазная броня',scene:'Арена блочной 3D-дуэли'}}))Object.assign(COPY[l],values);
 let lang=new URLSearchParams(location.search).get('lang');try{lang=lang||localStorage.getItem('levelup-language');}catch{}if(!COPY[lang]){const zone=Intl.DateTimeFormat().resolvedOptions().timeZone;lang=/Tashkent|Samarkand/.test(zone)?'uz':navigator.language?.startsWith('ru')?'ru':'en';}const t=k=>COPY[lang][k]||k;
 function translate(){document.documentElement.lang=lang;$$('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));$('#language').value=lang;$('#armor').ariaLabel=t('armor');$('#scene').ariaLabel=t('scene');$('#back').href='../?lang='+lang;updateStart();}
-$('#language').onchange=e=>{lang=e.target.value;try{localStorage.setItem('levelup-language',lang);}catch{}translate();};
+$('#language').onchange=e=>{lang=e.target.value;const url=new URL(location.href);url.searchParams.set('lang',lang);history.replaceState(null,'',url);try{localStorage.setItem('levelup-language',lang);}catch{}translate();};
 let unlocked=false;try{unlocked=JSON.parse(localStorage.getItem('levelup-progress')||'{}').completed?.some(x=>['math-linear','math-quadratic'].includes(x))||false;}catch{}
 $('#locked').hidden=unlocked;$('#options').hidden=!unlocked;
 let renderer,scene,camera,avatar,weaponRoot,shieldModel,swordModel,axeModel,appleModel;
