@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#8cbbd8"><title>Block Duel — LevelUp</title><link rel="stylesheet" href="arena.css"></head>
 <body>
  <canvas id="scene" aria-label="3D block duel arena" tabindex="-1"></canvas>
- <header class="topbar"><a id="back" href="../">← <span data-i="back">Back to learning</span></a><span>LEVELUP / <b>BLOCK DUEL</b></span><span id="performance">20 TPS</span></header>
+ <header class="topbar"><a id="back" href="../">← <span data-i="back">Back to learning</span></a><span>LEVELUP / <b>BLOCK DUEL</b></span><span id="input-state" role="status"></span><span id="performance">20 TPS</span></header>
  <div id="hud" hidden>
   <div class="match"><span id="opponent-name"></span><div class="enemy-track"><i id="enemy-health"></i></div><span id="enemy-health-value">20 / 20</span><span id="score">0 : 0</span><span id="round-time">0:00</span></div>
   <div id="crosshair" aria-hidden="true">+</div><div id="hit-marker" aria-hidden="true">×</div><div id="notice" role="status"></div>
@@ -15,11 +15,13 @@
   <div id="locked" hidden><p data-i="locked"></p><a class="primary" href="../?world=math" data-i="unlock"></a></div>
   <div id="options"><label><span data-i="mode">Opponent</span><select id="mode"><option value="bot" data-i="bot"></option><option value="dummy" data-i="dummy"></option><option value="peer" data-i="peer"></option></select></label>
    <div id="peer-panel" hidden><p data-i="lanHelp"></p><div class="peer-actions"><button id="host" data-i="host"></button><button id="join" data-i="join"></button></div><label><span data-i="incoming"></span><textarea id="incoming" rows="2" maxlength="64000" spellcheck="false"></textarea></label><button id="accept" data-i="accept" hidden></button><label id="outgoing-wrap" hidden><span data-i="outgoing"></span><textarea id="outgoing" rows="2" readonly spellcheck="false"></textarea><button id="copy" data-i="copy"></button></label><p id="peer-state" role="status"></p></div>
-   <div class="settings"><label><span data-i="quality"></span><select id="quality"><option value="low" data-i="low"></option><option value="balanced" data-i="balanced"></option></select></label><label><span data-i="sensitivity"></span><input id="sensitivity" type="range" min="0.5" max="3" step="0.1" value="1.3"></label></div>
+   <div class="settings"><label><span data-i="quality"></span><select id="quality"><option value="low" data-i="low"></option><option value="balanced" data-i="balanced"></option><option value="high" data-i="high"></option></select></label><label><span data-i="sensitivity"></span><input id="sensitivity" type="range" min="0.5" max="3" step="0.1" value="1.3"></label></div>
+   <p id="graphics-status" role="status"></p><label class="fullscreen-choice"><input type="checkbox" id="fullscreen-entry"><span data-i="fullscreen"></span></label>
    <button id="start" class="primary" data-i="start"></button>
    <details><summary data-i="controls"></summary><dl><dt>W A S D</dt><dd data-i="move"></dd><dt>R / Shift</dt><dd data-i="sprintSneak"></dd><dt>Space</dt><dd data-i="jump"></dd><dt data-i="leftClick"></dt><dd data-i="attack"></dd><dt data-i="rightClick"></dt><dd data-i="shieldApple"></dd><dt>1 / 2 / 3</dt><dd data-i="slots"></dd><dt>F / J</dt><dd data-i="keyboard"></dd></dl><p data-i="combatHelp"></p></details>
   </div><p class="footnote" data-i="original"></p>
  </section><div class="scene-caption"><span data-i="grounds">01 / THE TRAINING GROUNDS</span><b data-i="caption"></b></div></main>
+ <section id="capture-gate" hidden role="dialog" aria-modal="true" aria-labelledby="capture-title"><div class="capture-panel"><span class="eyebrow" data-i="inputLabel">BLOCK DUEL / INPUT</span><h2 id="capture-title" data-i="captureTitle"></h2><p id="capture-message"></p><button id="capture-play" class="primary" data-i="capturePlay"></button><button id="copy-arena-link" hidden data-i="copyLink"></button><input id="arena-link" aria-label="Arena URL" readonly hidden><button id="capture-fallback" hidden data-i="useDrag"></button><button id="capture-cancel" data-i="cancel"></button></div></section>
  <div id="fatal" hidden role="alert"></div>
  <script type="module" src="game.mjs"></script>
 </body></html>
