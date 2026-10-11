@@ -1,0 +1,7 @@
+# Sunset artwork
+
+Generated with the built-in ImageGen tool using the user's uploaded image as a composition and mood reference. The image contains no text. The original PNG is preserved as `sunset-dreams.png`; the site uses a JPEG encoding of the same image at `dist/assets/sunset-dreams.jpg`.
+
+## Final prompt
+
+Use case: illustration-story. Asset type: a wide website hero illustration, no text. Input image is a mood and composition reference. Create an original high-quality 16:9 cinematic illustrated sunset scene inspired by the reference: a tiny rounded orange creature, seen from behind, quietly sitting on the edge of a dark rooftop in the lower right, looking across a distant silhouetted city toward a very low brilliant sun on the left. Vast amber, burnt-orange, and muted coral sky with naturally streaked wispy clouds; dark plum and charcoal city silhouettes and rooftop foreground. Keep the tender, dreamy, slightly grainy hand-painted feeling of the reference, small character versus a big world. The creature is simple and cute with two little ears, no clothing or accessories. Strong sunset rim light, atmospheric depth, restrained detail. Wide composition with most of the image devoted to the sky, sun near lower-left horizon, character within lower-right third. Absolutely no text, captions, typography, letters, watermark, logo, border, or UI. In particular do not reproduce the words in the reference. A flat raster illustration, not a 3D render. Generate a polished, high-resolution landscape image.

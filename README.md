@@ -1,6 +1,6 @@
 # LevelUp learning arcade
 
-A buildless, responsive learning prototype in English, Uzbek, and Russian. Open `dist/index.html` through any static web server. No build or npm install is needed.
+A buildless, responsive learning prototype in English, Uzbek, and Russian. The redesigned landing page uses an editorial layout inspired by the YUYA reference: oversized typography, open whitespace, and a gallery of four subjects. Open `dist/index.html` through any static web server. No build or npm install is needed.
 
 ## Included
 
@@ -10,7 +10,7 @@ A buildless, responsive learning prototype in English, Uzbek, and Russian. Open 
 - Earn 50 XP once per quest; levels, badges, daily streaks, and progress use browser local storage.
 - Initial language uses the browser time zone and preferred languages, with a persistent manual override. Uzbekistan time zones select Uzbek. This is a location heuristic, not IP geolocation.
 - Desmos loads in an iframe only when requested. A direct calculator link is also provided. Answers are checked by the lesson form, independently of the iframe.
-- No 3D, WebGL, game engine, landing-page animation loop, external images, or required JavaScript dependencies. Optional Google Fonts fall back to system fonts.
+- No 3D, WebGL, game engine, landing-page animation loop, or required JavaScript dependencies. Optional Google Fonts fall back to system fonts. The original sunset artwork is served locally as a 212 KB JPEG; its full-resolution PNG and generation prompt are in `artwork/`.
 
 ## Scope
 
