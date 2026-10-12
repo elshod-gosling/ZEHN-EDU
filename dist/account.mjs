@@ -1,1 +1,1 @@
-export * from './supabase-account.mjs';
+export * from './supabase-account.mjs?v=supabase-1';

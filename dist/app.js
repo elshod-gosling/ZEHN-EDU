@@ -129,5 +129,5 @@ function openArena(){
  show('arena',`<h2 id="modal-title">${t('arenaTitle')}</h2><p>${t('arenaHelp')}</p><div class="game-buttons"><a class="primary arena-link" href="arena/?lang=${lang}">${t('enter3d')} →</a></div><p class="notice">${t('arenaNote')}</p>`);
 }
 if(typeof location!=='undefined'&&new URLSearchParams(location.search).get('world')==='math')setTimeout(mathLesson,0);
-if(typeof window!=='undefined')import('./credits-ui.mjs').then(({installCredits})=>installCredits({show,getLanguage:()=>lang,registerCleanup:fn=>{cleanup=fn}})).catch(error=>console.error('Account UI unavailable',error));
+if(typeof window!=='undefined')import('./credits-ui.mjs?v=supabase-1').then(({installCredits})=>installCredits({show,getLanguage:()=>lang,registerCleanup:fn=>{cleanup=fn}})).catch(error=>console.error('Account UI unavailable',error));
 render();

@@ -54,7 +54,7 @@ Pushes to `main` run `.github/workflows/pages.yml`, check the learning logic and
 
 Supabase provides email/password accounts and shared credit wallets. Browser sessions persist until explicit sign-out. The SDK is bundled locally in `dist/vendor/supabase.mjs`; account startup makes no requests to Google authentication services. Create-account handles email confirmation; password recovery opens a form for choosing a new password.
 
-Apply `supabase/migrations/202610120001_levelup_accounts.sql` to the selected Supabase project, then configure its URL and public publishable/anon key in `dist/account-config.mjs`. Empty configuration disables registration and shared credits while ordinary lessons and browser-local quest rewards remain available. Never put secret or service-role keys into the static site.
+Apply `supabase/migrations/202610120001_levelup_accounts.sql` to the selected Supabase project, then configure its URL and public publishable/anon key in `dist/supabase-config.mjs`. Empty configuration disables registration and shared credits while ordinary lessons and browser-local quest rewards remain available. Never put secret or service-role keys into the static site.
 
 Enable email/password sign-in and set the minimum password length to eight characters. Add both hosting origins to Auth redirect URLs, including `/?credits=1` under the GitHub project path. Configure email delivery before inviting students. The developer email is kept in the private settings table; developer access requires that account's email to be confirmed. Student metadata cannot grant developer access.
 

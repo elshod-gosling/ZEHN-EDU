@@ -1,4 +1,4 @@
-import { supabaseConfig } from './account-config.mjs';
+import { supabaseConfig } from './supabase-config.mjs';
 import { passRemaining } from './credit-policy.mjs';
 export const configured = !!(supabaseConfig.url && supabaseConfig.publishableKey);
 const listeners = new Set();

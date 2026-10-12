@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
-import * as creditAccount from '../account.mjs';
-import { creditCopy } from '../credits-ui.mjs';
+import * as creditAccount from '../supabase-account.mjs?v=supabase-1';
+import { creditCopy } from '../credits-ui.mjs?v=supabase-1';
 import {TICK,player,emptyInput,tickPlayer,attack,charge,botInput,separatePlayers,sanitizeInput,SOLIDS} from './physics.mjs';
 import {DuelPeer} from './peer.mjs';
 import {createMouseCapture} from './mouse.mjs';
