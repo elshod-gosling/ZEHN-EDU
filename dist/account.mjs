@@ -21,8 +21,8 @@ export async function initializeAccount() {
     sdk = { ...identity, ...store };
     const instance = app.initializeApp(firebaseConfig);
     auth = sdk.getAuth(instance); db = sdk.getFirestore(instance);
-    // School PCs: signing in survives navigation in this tab, not later visits.
-    await sdk.setPersistence(auth, sdk.browserSessionPersistence);
+    // Keep this browser signed in across tab/window closes until explicit sign-out.
+    await sdk.setPersistence(auth, sdk.browserLocalPersistence);
     sdk.onAuthStateChanged(auth, async next => {
       const current = ++generation; stopWallet(); ref = null; account = null; user = next; error = null; loading = !!next; emit();
       if (!next) { loading = false; emit(); return; }
@@ -94,6 +94,9 @@ export async function finishPractice(round, answer) {
 }
 export async function redeemPass() {
   requireWallet(); const wallet = ref;
+  // The wallet listener has already confirmed the role with the server. An
+  // unlimited pass needs no clock write, transaction, or extra backend roundtrip.
+  if (account.role === 'developer') return null;
   const pass = await sdk.runTransaction(db, async tx => {
     const snapshot = await tx.get(wallet), data = snapshot.data();
     if (data.role === 'developer') return null;
@@ -112,6 +115,7 @@ export async function redeemPass() {
 }
 export async function syncClock() {
   requireWallet();
+  if (account.role === 'developer') return;
   const wallet = ref, before = Date.now();
   await sdk.updateDoc(wallet, { updatedAt: sdk.serverTimestamp() });
   const snap = await sdk.getDocFromServer(wallet); account = snap.data();
