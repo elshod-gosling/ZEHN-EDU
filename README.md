@@ -1,4 +1,4 @@
-# LevelUp learning arcade
+# ZEHN-EDU learning arcade
 
 A buildless, responsive learning prototype in English, Uzbek, and Russian. The redesigned landing page uses an editorial layout inspired by the YUYA reference: oversized typography, open whitespace, and a gallery of four subjects. Open `dist/index.html` through any static web server. No build or npm install is needed.
 
@@ -26,7 +26,7 @@ Rendering uses one requestAnimationFrame callback per display refresh (browser V
 
 Graphics has Low, Balanced, and High presets. Low remains the default for new browsers, while an explicitly selected preset is remembered locally. High lazily imports its own module and replaces 16px materials with original 128px color/normal/roughness maps, physically based lighting and environment reflections. It adds 2048px soft shadow maps, procedural sky/cloud shaders, animated grass blades and water, depth-based contact shading when supported, separable bloom, screen-space sun rays, FXAA, and ACES-style tone mapping. High render targets use HDR half-float storage when supported and unsigned-byte storage otherwise. Switching back restores the original materials, sky, and lighting and disables all extra passes. The landing page does not import these files. High has not been benchmarked on school hardware; it is intended as an optional graphics upgrade.
 
-Direct multiplayer uses WebRTC with manual invitation/reply codes and no external ICE servers. Both browsers need an active credit pass or developer access and access to the site. The host simulates both players and sends authoritative snapshots; the guest predicts local movement. This is for peers on a reachable local network, not internet matchmaking. Network isolation/firewalls may prevent connections. Codes are exchanged by the players; the site does not send messages for them. The host can cheat and is not a trusted assessment or competitive server.
+Direct multiplayer uses WebRTC with eight-character room codes. Supabase exchanges the connection offer and reply automatically; players share only the short code. The room table is private, only its two participants can read connection details, and hosting/joining requires an active credit pass or developer access. Pending connections time out after 90 seconds; abandoned server records expire after ten minutes and are cleaned when rooms are created. This is for peers on a reachable local network, with no external ICE servers. Network isolation/firewalls may prevent connections. The host simulates both players and can cheat; this is not a trusted competitive server.
 
 This is an original browser approximation, not the Minecraft Java engine or a claim of exact parity across Minecraft versions. Simplifications include deterministic charged-axe shield disable, no enchantments, no hunger/fall damage, no inventory building, and no shield durability. Apples restore four health over five seconds and grant four absorption health for two minutes. Browser frame scheduling and network latency affect feel. Performance has not been measured on the user's specified school laptop.
 
@@ -44,9 +44,9 @@ Run `python -m http.server 4173 --bind 127.0.0.1 --directory dist` from this dir
 
 ## GitHub and public hosting
 
-Source repository: https://github.com/elshod-gosling/levelup-learning-arcade
+Source repository: https://github.com/elshod-gosling/ZEHN-EDU
 
-Public website: https://elshod-gosling.github.io/levelup-learning-arcade/
+Public website: https://elshod-gosling.github.io/ZEHN-EDU/
 
 Pushes to `main` run `.github/workflows/pages.yml`, check the learning logic and combat, and publish only `dist/` to GitHub Pages. No installation or build step is needed. All assets and arena links use relative paths so project-subdirectory hosting works. Legacy quest XP stays local to each hosting origin; credits use the same Supabase account on both hosts. The existing private Sites deployment remains available independently.
 
@@ -54,13 +54,13 @@ Pushes to `main` run `.github/workflows/pages.yml`, check the learning logic and
 
 Supabase provides email/password accounts and shared credit wallets. Browser sessions persist until explicit sign-out. The SDK is bundled locally in `dist/vendor/supabase.mjs`; account startup makes no requests to Google authentication services. Create-account handles email confirmation; password recovery opens a form for choosing a new password.
 
-Apply `supabase/migrations/202610120001_levelup_accounts.sql` to the selected Supabase project, then configure its URL and public publishable/anon key in `dist/supabase-config.mjs`. Empty configuration disables registration and shared credits while ordinary lessons and browser-local quest rewards remain available. Never put secret or service-role keys into the static site.
+Apply `supabase/migrations/202610120001_levelup_accounts.sql` and `supabase/migrations/20261012155825_room_codes.sql` to the selected Supabase project, then configure its URL and public publishable/anon key in `dist/supabase-config.mjs`. Empty configuration disables registration and shared credits while ordinary lessons and browser-local quest rewards remain available. Never put secret or service-role keys into the static site.
 
 Enable email/password sign-in and set the minimum password length to eight characters. Add both hosting origins to Auth redirect URLs, including `/?credits=1` under the GitHub project path. Configure email delivery before inviting students. The developer email is kept in the private settings table; developer access requires that account's email to be confirmed. Student metadata cannot grant developer access.
 
 Each correct learning round earns 10 credits after at least 60 seconds. A five-minute PvP pass costs 100 credits; resuming an active pass is free. SQL functions lock each wallet row, check timing and answers on the server, and assign expiry from the server clock. Browser clients can read only their own wallet and cannot write balances, roles, or answer keys. The private lesson bank contains 32 rounds in English, Uzbek, and Russian.
 
-The four authenticated RPCs intentionally use `SECURITY DEFINER` to perform these restricted writes. Each checks `auth.uid()`, uses an empty search path, and denies anonymous execution. Supabase's advisor flags their authenticated execution for review; this is the intended API access model.
+The authenticated wallet and room RPCs intentionally use `SECURITY DEFINER` to perform restricted writes. Each checks `auth.uid()`, uses an empty search path, and denies anonymous execution. Supabase's advisor flags their authenticated execution for review; this is the intended API access model.
 
 Account identities and previous hosted balances are not automatically transferred between providers. The previous cloud data is retained; migration of real students requires a separate verified identity mapping. Legacy quest XP remains local to each hosting origin. A trusted multiplayer server is still required for tamper-resistant competitive game access.
 

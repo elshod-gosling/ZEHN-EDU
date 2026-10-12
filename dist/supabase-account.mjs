@@ -97,3 +97,8 @@ export async function syncClock() {
   const result = await rpc('levelup_get_wallet'); applyWallet(result.data, result.before, result.after);
 }
 export const reconnect = refreshWallet;
+export async function createRoom(offer) { requireWallet(); return (await rpc('levelup_create_room',{connection_offer:offer})).data; }
+export async function joinRoom(code) { requireWallet(); return (await rpc('levelup_join_room',{room_code:code})).data; }
+export async function roomStatus(id) { requireWallet(); return (await rpc('levelup_room_status',{room_id:id})).data; }
+export async function answerRoom(id,answer) { requireWallet(); await rpc('levelup_answer_room',{room_id:id,connection_answer:answer}); }
+export async function closeRoom(id) { if (client && user) await rpc('levelup_close_room',{room_id:id}); }
