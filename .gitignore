@@ -4,6 +4,4 @@ node_modules/
 __pycache__/
 *.tar.gz
 .DS_Store
-firebase-debug.log
-firestore-debug.log
-.firebase/
+*.log

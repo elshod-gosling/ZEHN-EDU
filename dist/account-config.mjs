@@ -1,7 +1,2 @@
-// Public Firebase web identifiers. Administrative credentials never belong here.
-export const firebaseConfig = {
-  "apiKey": "AIzaSyCEVhOiA6VJQiVh-UzVMgpYgwv03iTRqPY",
-  "authDomain": "zehnedu-1.firebaseapp.com",
-  "projectId": "zehnedu-1",
-  "appId": "1:975776091255:web:6abf80d4089fa488caca72"
-};
+// Public browser configuration. Administrative keys never belong in this site.
+export const supabaseConfig = { url: 'https://xnjrjxslaidsqeguvcqc.supabase.co', publishableKey: 'sb_publishable_3E77v7gELEKEO_1UBBzHxg_MN_igTot' };

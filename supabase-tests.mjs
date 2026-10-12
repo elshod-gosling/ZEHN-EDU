@@ -1,0 +1,55 @@
+import fs from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import { PGlite } from '@electric-sql/pglite';
+const db = new PGlite();
+const kid='00000000-0000-4000-8000-000000000001', other='00000000-0000-4000-8000-000000000002', owner='00000000-0000-4000-8000-000000000003', fake='00000000-0000-4000-8000-000000000004';
+await db.exec(`create role anon; create role authenticated;
+  create schema auth;
+  create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);
+  create function auth.uid() returns uuid language sql stable as 'select nullif(current_setting(''request.jwt.claim.sub'',true),'''')::uuid';
+  grant usage on schema public,auth to anon,authenticated;
+  grant execute on function auth.uid() to anon,authenticated;`);
+await db.exec(await fs.readFile('supabase/migrations/202610120001_levelup_accounts.sql','utf8'));
+await db.query(`insert into auth.users values ($1,'kid@example.com',null),($2,'other@example.com',null),($3,'elshodcs2@gmail.com',now()),($4,'elshodcs2@gmail.com',null)`,[kid,other,owner,fake]);
+async function as(uid, sql, args=[]) {
+  return db.transaction(async tx=>{
+    await tx.exec('set local role authenticated');
+    await tx.query("select set_config('request.jwt.claim.sub',$1,true)",[uid]);
+    return tx.query(sql,args);
+  });
+}
+const rpc = async (uid,name,args=[]) => (await as(uid,`select public.${name}(${args.map((_,i)=>'$'+(i+1)).join(',')}) as result`,args)).rows[0].result;
+try {
+  assert.equal((await rpc(kid,'levelup_get_wallet')).credits,0);
+  await assert.rejects(as(kid,'update public.levelup_accounts set credits=999999 where user_id=$1',[kid]),/permission denied/);
+  await assert.rejects(as(kid,"update public.levelup_accounts set role='developer' where user_id=$1",[kid]),/permission denied/);
+  await assert.rejects(as(kid,'select * from private.levelup_questions'),/permission denied/);
+  await assert.rejects(as(kid,'select * from private.levelup_settings'),/permission denied/);
+  assert.equal((await as(other,'select * from public.levelup_accounts')).rows.length,0);
+  await assert.rejects(db.transaction(async tx=>{await tx.exec('set local role anon');return tx.query('select public.levelup_get_wallet()');}),/permission denied/);
+  const round=await rpc(kid,'levelup_start_round',['coding']);
+  assert.equal(round.id,'q0'); assert(!('answer' in round),'Do not disclose answer keys');
+  await assert.rejects(rpc(kid,'levelup_finish_round',['q0',0,'10']),/round-too-early/);
+  await db.query(`update public.levelup_accounts set "startedAt"=now()-interval '65 seconds',"lastEarnAt"=now()-interval '65 seconds' where user_id=$1`,[kid]);
+  await assert.rejects(rpc(kid,'levelup_finish_round',['q0',0,'999']),/wrong-answer/);
+  assert.equal((await rpc(kid,'levelup_get_wallet')).credits,0);
+  assert.equal((await rpc(kid,'levelup_finish_round',['q0',0,'10'])).credits,10);
+  await assert.rejects(rpc(kid,'levelup_finish_round',['q0',0,'10']),/round-changed/);
+  await assert.rejects(rpc(kid,'levelup_redeem_pass'),/not-enough-credits/);
+  await db.query('update public.levelup_accounts set credits=200 where user_id=$1',[kid]);
+  const pass=await rpc(kid,'levelup_redeem_pass'); assert.equal(pass.credits,100);
+  assert(Math.abs(Date.parse(pass.passUntil)-Date.parse(pass.serverNow)-300000)<1000);
+  const resumed=await rpc(kid,'levelup_redeem_pass'); assert.equal(resumed.credits,100); assert.equal(resumed.passUntil,pass.passUntil);
+  await db.query(`update public.levelup_accounts set "passUntil"=now()-interval '1 second' where user_id=$1`,[kid]);
+  assert.equal((await rpc(kid,'levelup_redeem_pass')).credits,0);
+  assert.equal((await rpc(owner,'levelup_get_wallet')).role,'developer');
+  assert.equal((await rpc(owner,'levelup_redeem_pass')).credits,0);
+  assert.equal((await rpc(fake,'levelup_get_wallet')).role,'student','Unverified email must not grant developer access');
+  await db.query('update auth.users set email=$1 where id=$2',['changed@example.com',owner]);
+  assert.equal((await rpc(owner,'levelup_get_wallet')).role,'student','Changed owner email must revoke developer role');
+  const first=await rpc(kid,'levelup_start_round',['office']);
+  const restarted=await rpc(kid,'levelup_start_round',['math']);
+  assert.notEqual(first.id,restarted.id);
+  await assert.rejects(rpc(kid,'levelup_finish_round',[first.id,first.cursor,'anything']),/round-changed/);
+  console.log('PASS: PostgreSQL wallet isolation, private answer keys, exact payouts, early/wrong/duplicate claims, pass cost/expiry/reuse, verified developer role and round restarts.');
+} finally { await db.close(); }

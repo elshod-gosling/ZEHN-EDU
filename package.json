@@ -1,13 +1,15 @@
 {
   "name": "levelup-learning-arcade",
   "private": true,
+  "type": "module",
   "scripts": {
+    "test": "node verify.mjs && node arena-tests.mjs && node block-tests.mjs && node mouse-tests.mjs && node entry-tests.mjs && node loop-tests.mjs && node credit-tests.mjs && node account-tests.mjs && node supabase-tests.mjs",
     "test:credits": "node credit-tests.mjs",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-levelup \"node firestore-tests.mjs\""
+    "bundle:account": "esbuild supabase/client.mjs --bundle --format=esm --platform=browser --minify --outfile=dist/vendor/supabase.mjs"
   },
   "devDependencies": {
-    "@firebase/rules-unit-testing": "6.0.0",
-    "firebase": "13.0.0",
-    "firebase-tools": "15.33.0"
+    "@electric-sql/pglite": "0.5.9",
+    "@supabase/supabase-js": "2.117.3",
+    "esbuild": "0.28.2"
   }
 }

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { POLICY, advancePractice, canRedeem, passRemaining, initialAccount } from './dist/credit-policy.mjs';
-import { questionBank } from './firebase/question-bank.mjs';
+import { questionBank } from './supabase/question-bank.mjs';
 import { creditCopy } from './dist/credits-ui.mjs';
 assert.equal(POLICY.passCost/POLICY.perRound*POLICY.roundSeconds,600,'A pass requires ten minutes at the maximum legal earn rate');
 assert.equal(canRedeem({credits:99}),false);assert.equal(canRedeem({credits:100}),true);

@@ -1,4 +1,4 @@
-// The public site receives questions, not the Firestore answer-key collection.
+// Server-owned lesson bank. Only question content is returned to students.
 // Open-source examples are educational material, not authentication secrets.
 const languages = ['en', 'uz', 'ru'];
 const texts = (en, uz, ru) => ({ en, uz, ru });
