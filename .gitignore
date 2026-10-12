@@ -5,3 +5,4 @@ __pycache__/
 *.tar.gz
 .DS_Store
 *.log
+qa/.podium-preview/

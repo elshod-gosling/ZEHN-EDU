@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node verify.mjs && node arena-tests.mjs && node block-tests.mjs && node mouse-tests.mjs && node entry-tests.mjs && node loop-tests.mjs && node credit-tests.mjs && node account-tests.mjs && node supabase-tests.mjs && node room-tests.mjs",
+    "test": "node verify.mjs && node arena-tests.mjs && node block-tests.mjs && node mouse-tests.mjs && node entry-tests.mjs && node loop-tests.mjs && node credit-tests.mjs && node account-tests.mjs && node supabase-tests.mjs && node room-tests.mjs && node podium-tests.mjs",
     "test:credits": "node credit-tests.mjs",
     "bundle:account": "esbuild supabase/client.mjs --bundle --format=esm --platform=browser --minify --outfile=dist/vendor/supabase.mjs"
   },

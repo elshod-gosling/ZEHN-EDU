@@ -42,6 +42,7 @@ jobs:
           npm ci --ignore-scripts --no-audit --no-fund
           node supabase-tests.mjs
           node room-tests.mjs
+          node podium-tests.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
