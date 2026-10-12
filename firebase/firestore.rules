@@ -1,13 +1,16 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function googleUser() {
-      return request.auth != null && request.auth.token.email_verified == true
-        && request.auth.token.firebase.sign_in_provider == 'google.com';
+    function emailUser() {
+      return request.auth != null && request.auth.token.email is string
+        && (request.auth.token.firebase.sign_in_provider == 'password'
+          || (request.auth.token.firebase.sign_in_provider == 'google.com'
+            && request.auth.token.email_verified == true));
     }
-    function owns(uid) { return googleUser() && request.auth.uid == uid; }
+    function owns(uid) { return emailUser() && request.auth.uid == uid; }
     function developer() {
-      return googleUser() && exists(/databases/$(database)/documents/policy/access)
+      return emailUser() && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/policy/access)
         && request.auth.token.email == get(/databases/$(database)/documents/policy/access).data.developerEmail;
     }
     function shape(d) {
@@ -58,7 +61,7 @@ service cloud.firestore {
           && d.passUntil <= request.time + duration.value(303,'s');
       }
     }
-    match /questions/{id} { allow read: if googleUser(); }
+    match /questions/{id} { allow read: if emailUser(); }
     // Only the Firebase project administrator can seed these via the Admin SDK.
     // A developer in the website does not gain Firebase administrative credentials.
     match /answerKeys/{id} { allow read, write: if false; }

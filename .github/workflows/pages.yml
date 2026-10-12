@@ -45,6 +45,9 @@ jobs:
           node --check dist/arena/high-graphics.mjs
           node verify.mjs
           node arena-tests.mjs
+          node block-tests.mjs
+          node --check dist/account.mjs
+          node --check dist/credits-ui.mjs
           node mouse-tests.mjs
           node loop-tests.mjs
           node entry-tests.mjs

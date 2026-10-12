@@ -44,11 +44,26 @@ export async function initializeAccount() {
   })().catch(e => { loading = false; error = e.code || 'unavailable'; pendingSetup = null; emit(); throw e; });
   return pendingSetup;
 }
-export async function signIn() {
+export async function signInWithGoogle() {
   if (!configured) throw new Error('setup-required');
   await initializeAccount();
   const provider = new sdk.GoogleAuthProvider(); provider.setCustomParameters({ prompt: 'select_account' });
   return sdk.signInWithPopup(auth, provider);
+}
+export async function createAccount(name, email, password) {
+  await initializeAccount();
+  const result = await sdk.createUserWithEmailAndPassword(auth, email.trim(), password);
+  await sdk.updateProfile(result.user, { displayName: name.trim() });
+  emit();
+  return result;
+}
+export async function signIn(email, password) {
+  await initializeAccount();
+  return sdk.signInWithEmailAndPassword(auth, email.trim(), password);
+}
+export async function resetPassword(email) {
+  await initializeAccount();
+  return sdk.sendPasswordResetEmail(auth, email.trim());
 }
 export async function signOut() { if (auth) await sdk.signOut(auth); }
 function requireWallet() { if (!ref || !account || !user || error) throw new Error('sign-in-required'); }

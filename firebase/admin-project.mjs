@@ -79,6 +79,10 @@ if (action === 'inspect') {
   const authorizedDomains = [...new Set([...(current.authorizedDomains || []), 'elshod-gosling.github.io', 'levelup-learning-arcade.awareeel4.chatgpt.site', 'localhost', '127.0.0.1'])];
   const result = await api('identitytoolkit.googleapis.com', path + '?updateMask=authorizedDomains', 'PATCH', { authorizedDomains });
   console.log(JSON.stringify({ project, authorizedDomains: result.authorizedDomains }));
+} else if (action === 'email') {
+  const path = '/admin/v2/projects/' + project + '/config';
+  const result = await api('identitytoolkit.googleapis.com', path + '?updateMask=signIn.email', 'PATCH', { signIn: { email: { enabled: true, passwordRequired: true } } });
+  console.log(JSON.stringify({ project, emailEnabled: result.signIn?.email?.enabled, passwordRequired: result.signIn?.email?.passwordRequired }));
 } else if (action === 'google') {
   const path = '/admin/v2/projects/' + project + '/defaultSupportedIdpConfigs/google.com';
   const current = await api('identitytoolkit.googleapis.com', path);
@@ -91,4 +95,4 @@ if (action === 'inspect') {
   const config = { apiKey: result.apiKey, authDomain: result.authDomain, projectId: result.projectId, appId: result.appId };
   await fs.writeFile('dist/account-config.mjs', '// Public Firebase web identifiers. Administrative credentials never belong here.\nexport const firebaseConfig = ' + JSON.stringify(config, null, 2) + ';\n');
   console.log(JSON.stringify({ project, appId, configured: true }));
-} else { throw new Error('Choose inspect, seed, owner, enable-api, database, domains, google, or config.'); }
+} else { throw new Error('Choose inspect, seed, owner, enable-api, database, domains, email, google, or config.'); }
