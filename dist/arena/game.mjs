@@ -4,6 +4,7 @@ import { creditCopy } from '../credits-ui.mjs?v=zehn-rooms-1';
 import {TICK,player,emptyInput,tickPlayer,attack,charge,botInput,separatePlayers,sanitizeInput,SOLIDS,WEAPONS,ITEM_COUNTS} from './physics.mjs';
 import {launchProjectile,tickProjectiles,validProjectiles} from './projectiles.mjs';
 import {createExtraItems,createProjectileVisuals} from './items.mjs';
+import {enemyTagPosition} from './enemy-tag.mjs';
 import {DuelRoom} from './room.mjs?v=zehn-rooms-1';
 import {createMouseCapture} from './mouse.mjs';
 import {createFrameLoop} from './loop.mjs';
@@ -131,7 +132,7 @@ async function begin(){
  capturePending=false;$('#capture-play').disabled=false;$('#capture-play').textContent=t('capturePlay');updateStart();
  if(!locked){captureGate(true);return;}if(!mouseCapture.locked){captureGate(false,'captureFullscreen');return;}play();
 }
-$('#start').onclick=begin;$('#pause').onclick=pause;
+$('#start').onclick=begin;
 function cancelEntry(){entryRequest++;capturePending=false;mouseCapture.cancel();$('#capture-play').disabled=false;$('#capture-play').textContent=t('capturePlay');updateStart();}
 $('#capture-play').onclick=begin;$('#capture-fallback').onclick=()=>{cancelEntry();dragControls=true;play();};$('#capture-cancel').onclick=()=>{cancelEntry();if(started&&!roundEnded)pause();$('#capture-gate').hidden=true;$('#menu').inert=false;$('#start').focus();};$('#copy-arena-link').onclick=async()=>{try{await navigator.clipboard.writeText(location.href);$('#capture-message').textContent=t('linkCopied');}catch{$('#arena-link').hidden=false;$('#arena-link').value=location.href;$('#arena-link').select();}};
 $('#capture-gate').addEventListener('keydown',e=>{if(e.code==='Escape'){$('#capture-cancel').click();return;}if(e.code==='Tab'){const buttons=[...$('#capture-gate').querySelectorAll('button,input,a[href]')].filter(el=>!el.hidden&&!el.disabled);const first=buttons[0],last=buttons.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
@@ -227,6 +228,7 @@ function frame(now,delta,partialTick=0){
  if(podium?.active){podium.draw(now);}else if(started&&!roundEnded){const me=players[localId],other=players[1-localId],lerp=1-Math.exp(-renderDelta/42);for(let k=0;k<2;k++){const snap=Math.hypot(players[k].x-visual[k].x,players[k].y-visual[k].y,players[k].z-visual[k].z)>3;for(const axis of ['x','y','z'])visual[k][axis]+= (players[k][axis]-visual[k][axis])*(snap?1:lerp);}
  const v=visual[localId];camera.position.set(v.x,v.y+1.62,v.z);camera.rotation.set(pitch,yaw,0);const speed=Math.hypot(me.vx,me.vz),bob=Math.sin(now*.013)*Math.min(.018,speed*.06);camera.position.y+=me.ground?bob:0;
  const targetFov=me.sprint?82:75;camera.fov+=(targetFov-camera.fov)*(1-Math.exp(-renderDelta/103));camera.updateProjectionMatrix();avatar.position.set(visual[1-localId].x,visual[1-localId].y,visual[1-localId].z);avatar.rotation.y=other.yaw;
+ const tag=$('#enemy-tag'),tagPosition=other.health>0?enemyTagPosition(camera,avatar.position,innerWidth,innerHeight):null;tag.hidden=!tagPosition;if(tagPosition){tag.style.left=tagPosition.x+'px';tag.style.top=tagPosition.y+'px';}
  const walk=Math.sin(now*.012)*Math.min(.7,Math.hypot(other.vx,other.vz)*4);avatar.userData.legLeft.rotation.x=walk;avatar.userData.legRight.rotation.x=-walk;avatar.userData.armRight.rotation.x=other.swing?-.9-Math.sin(other.swing/5*Math.PI)*.9:-walk*.7;avatar.userData.armLeft.rotation.x=other.shieldTicks>=5?-.9:walk*.7;avatar.userData.sword.visible=other.slot===0;avatar.userData.axe.visible=other.slot===1;avatar.userData.shield.rotation.y=other.shieldTicks>=5?.2:0;avatar.userData.shield.visible=other.slot<2;avatar.scale.setScalar(other.health>0?1:.2);
  const recovery=me.slot<2?1-charge(me,partialTick):0,swing=Math.sin(me.swing/5*Math.PI),using=me.use>0?Math.sin(now*.016)*.07:0;weaponRoot.position.set(.43-swing*.25,-.52+bob-swing*.07-recovery*.15+using,-.78+swing*.15);weaponRoot.rotation.set(-swing*.85-recovery*.2,0,-.28-swing*.5);swordModel.visible=me.slot===0;axeModel.visible=me.slot===1;appleModel.visible=me.slot===2&&me.apples>0;extraModels.forEach((model,n)=>model.visible=me.slot===n+3&&(n===0||me[ITEM_COUNTS[n+3]]>0));extraModels[0].children[7].position.x=-.12-me.draw/20*.15;avatar.userData.items.forEach((model,n)=>model.visible=other.slot===n&&(n<2||n===3||other[ITEM_COUNTS[n]]>0));if(other.draw||other.use)avatar.userData.armRight.rotation.x=-1.2;shieldModel.position.set(me.shieldTicks>=5?-.31:-.53,me.shieldTicks>=5?-.14:-.56,-.71);shieldModel.rotation.x=me.shieldTicks>=5?0:-.18;shieldModel.visible=me.slot<2;
  }else{camera.position.set(19,14,23);camera.lookAt(0,0,0);avatar.position.set(0,0,0);avatar.rotation.y=.6;avatar.scale.setScalar(1);}
