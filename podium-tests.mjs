@@ -26,7 +26,7 @@ assert.equal(celebrationPose(2,true).wave,0);assert(celebrationPose(2,true).bow>
 const source=fs.readFileSync('dist/arena/game.mjs','utf8');
 const render=source.slice(source.indexOf('function frame(now,'),source.indexOf("window.addEventListener('resize'"));
 let draws=0,renders=0;const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{textContent:'',style:{}});return nodes.get(id);};
-const context=vm.createContext({Math,console,started:true,roundEnded:true,running:false,podium:{active:true,draw(){draws++;}},weaponRoot:heldWeapon,shieldModel:new THREE.Group(),avatar:otherFighter,$:node,t:x=>x,quality:'low',highGraphics:null,scene,camera,renderer:{render(){renders++;}},noticeUntil:0,hitUntil:0,hudSince:10000,frames:0,fpsSince:10000});
+const context=vm.createContext({Math,console,started:true,roundEnded:true,running:false,podium:{active:true,draw(){draws++;}},weaponRoot:heldWeapon,shieldModel:new THREE.Group(),avatar:otherFighter,$:node,t:x=>x,quality:'low',highGraphics:null,players:[{slot:0}],projectiles:[],projectileVisuals:null,scene,camera,renderer:{render(){renders++;}},noticeUntil:0,hitUntil:0,hudSince:10000,frames:0,fpsSince:10000});
 vm.runInContext(render,context);vm.runInContext('frame(8000,16,0)',context);
 assert.equal(draws,1);assert.equal(renders,1);assert.equal(heldWeapon.visible,false,'Started must not re-enable the foreground axe after a round');
 context.podium.active=false;otherFighter.scale.setScalar(.2);vm.runInContext('frame(8016,16,0)',context);

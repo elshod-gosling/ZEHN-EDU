@@ -30,6 +30,7 @@ jobs:
           node --check dist/arena/high-graphics.mjs
           node verify.mjs
           node arena-tests.mjs
+          node item-tests.mjs
           node block-tests.mjs
           node --check dist/account.mjs
           node --check dist/supabase-account.mjs

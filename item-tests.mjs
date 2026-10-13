@@ -1,0 +1,54 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import {player,tickPlayer,emptyInput,attack,sanitizeInput,WEAPONS,ITEM_COUNTS} from './dist/arena/physics.mjs';
+import {launchProjectile,tickProjectiles,pearlLanding,validProjectiles} from './dist/arena/projectiles.mjs';
+import {createExtraItems,createProjectileVisuals} from './dist/arena/items.mjs';
+import * as THREE from './dist/arena/vendor/three.module.js';
+const step=(p,input,n)=>Array.from({length:n},()=>tickPlayer(p,{...emptyInput(),...input})).flat();
+const pair=()=>{const a=player(),b=player(1);a.z=0;a.yaw=0;b.z=-6;b.yaw=Math.PI;return [a,b];};
+let [a,b]=pair();
+step(a,{slot:3,shield:true},20);assert.equal(a.draw,20);assert.equal(a.arrows,16);assert.equal(attack(a,b),null,'A drawn bow cannot melee');
+let events=step(a,{slot:3},1);assert.equal(events[0].power,1);assert.equal(a.arrows,15);assert.equal(a.draw,0);
+let shots=[launchProjectile(a,events[0],1)];let hits=[];for(let k=0;k<3;k++)hits.push(...tickProjectiles(shots,[a,b]));
+assert.equal(hits[0].kind,'arrowHit');assert(b.health<18);assert(b.vz<0);assert.equal(shots.length,0);
+[a,b]=pair();step(a,{slot:3,shield:true},2);assert.deepEqual(step(a,{slot:3},1),[]);assert.equal(a.arrows,16,'A tap does not spend arrows');
+step(a,{slot:3,shield:true},20);assert.deepEqual(step(a,{slot:0},1),[],'Switching cancels a drawn bow');assert.equal(a.arrows,16);
+a.arrows=0;step(a,{slot:3,shield:true},20);assert.equal(a.draw,0);
+for(const item of ['arrow','snowball']){
+ [a,b]=pair();b.shieldTicks=5;shots=[launchProjectile(a,{item,power:1},1)];hits=[];for(let k=0;k<5;k++)hits.push(...tickProjectiles(shots,[a,b]));assert.equal(hits[0].kind,'block');assert.equal(b.health,20);assert.equal(b.vz,0);
+ [a,b]=pair();b.shieldTicks=5;b.yaw=0;shots=[launchProjectile(a,{item,power:1},1)];hits=[];for(let k=0;k<5;k++)hits.push(...tickProjectiles(shots,[a,b]));assert.equal(hits[0].kind,item==='arrow'?'arrowHit':'snowballHit','Projectiles can hit behind a shield');
+}
+[a,b]=pair();shots=[launchProjectile(a,{item:'arrow',power:1},1)];tickProjectiles(shots,[a,b],[[-1,0,-2,1,3,-1.9]]);assert.equal(shots.length,0,'Fast arrows cannot tunnel through thin walls');assert.equal(b.health,20);
+[a,b]=pair();shots=[launchProjectile(a,{item:'snowball',power:1},1)];hits=[];for(let k=0;k<5;k++)hits.push(...tickProjectiles(shots,[a,b]));assert.equal(b.health,20,'Snowballs only knock back');assert(b.vz<0);assert.equal(hits[0].kind,'snowballHit');
+a=player();a.yaw=0;a.pitch=-.4;a.z=6;events=step(a,{slot:4,shield:true,yaw:0,pitch:-.4},1);assert.equal(a.pearls,2);assert.equal(a.pearlCooldown,20);shots=[launchProjectile(a,events[0],1)];hits=[];for(let k=0;k<60;k++)hits.push(...tickProjectiles(shots,[a,{...player(1),z:-10}]));assert.equal(hits[0].kind,'teleport');assert(a.z<4&&a.ground);assert.equal(a.health,16);assert.equal(a.vx,0);
+step(a,{slot:4,shield:true},40);assert.equal(a.pearls,2,'Holding use does not chain pearls');step(a,{slot:4},1);step(a,{slot:4,shield:true},1);assert.equal(a.pearls,1);
+const landing=pearlLanding({vx:1,vy:0,vz:0},[14,1,0]);assert(landing&&landing.x<=13.65&&landing.y===0,'Wall impacts return to the inside floor');
+assert.equal(pearlLanding({vx:0,vy:1,vz:0},[20,2,20]),null,'Pearls cannot escape the arena');
+a=player();a.health=5;step(a,{slot:6,shield:true},15);assert.equal(a.health,5);step(a,{slot:6,shield:true},1);assert.equal(a.health,13);assert.equal(a.healingPotions,1);step(a,{slot:6,shield:true},40);assert.equal(a.healingPotions,1,'One potion per continuous hold');
+step(a,{slot:6},1);step(a,{slot:6,shield:true},16);assert.equal(a.health,20);assert.equal(a.healingPotions,0);
+a=player();step(a,{slot:6,shield:true},32);assert.equal(a.healingPotions,2,'Full health does not waste healing potions');
+a.health=10;step(a,{slot:6,shield:true},10);step(a,{slot:0},1);assert.equal(a.use,0);assert.equal(a.healingPotions,2,'Changing slots cancels drinking');
+a=player();step(a,{slot:7,shield:true},16);assert.equal(a.speedTicks,1200);assert.equal(a.speedPotions,0);step(a,{slot:7},1200);assert.equal(a.speedTicks,0);
+const slow=player(),fast=player();fast.speedTicks=100;step(slow,{forward:1,yaw:0},10);step(fast,{forward:1,yaw:0},10);assert(Math.abs(fast.z+6)>Math.abs(slow.z+6)*1.15,'Speed changes actual movement');
+[a,b]=pair();b.z=-2;const base=attack(a,b).damage;[a,b]=pair();b.z=-2;step(a,{slot:8,shield:true},16);assert.equal(a.strengthTicks,1200);assert.equal(a.strengthPotions,0);a.slot=0;a.charge=40;a.yaw=0;assert(attack(a,b).damage>base,'Strength buffs melee');
+[a,b]=pair();b.z=-2;a.sprint=true;assert.equal(attack(a,b).kind,'sprintHit');step(a,{sprint:true,forward:1,yaw:0},1);assert.equal(a.sprint,false,'Held sprint cannot repeat bonus knockback');step(a,{sprint:false,yaw:0},1);step(a,{sprint:true,forward:1,yaw:0},1);assert.equal(a.sprint,true);
+assert.equal(sanitizeInput({slot:100}).slot,8);assert.equal(sanitizeInput({slot:-2}).slot,0);
+assert(validProjectiles([]));assert(!validProjectiles([{item:'arrow',owner:1,x:NaN}]));
+const models=createExtraItems();assert.equal(models.length,6);assert(models.every(m=>m.children.length>0));
+const scene=new THREE.Scene(),visual=createProjectileVisuals(scene);[a,b]=pair();shots=[launchProjectile(a,{item:'arrow',power:1},1)];visual.draw(shots,true);assert.equal(scene.children[0].children.length,1);visual.draw([],false);assert.equal(scene.children[0].children.length,0);assert.equal(scene.children[0].visible,false);
+
+// Execute the real host/guest branches so item actions stay server-simulated.
+const source=fs.readFileSync('dist/arena/game.mjs','utf8');
+const sim=source.slice(source.indexOf('function simTick()'),source.indexOf('function updateCooldown('));
+const sent=[];[a,b]=pair();const input={...emptyInput(),slot:5,shield:true};
+const context=vm.createContext({Math,performance:{now:()=>100},running:true,readInput:()=>input,attackPending:false,keys:new Set(),yaw:0,pitch:0,mode:'peer',localId:0,network:{send:m=>sent.push(m)},players:[a,b],remoteSeen:100,remoteInput:{...emptyInput(),slot:7,shield:true},emptyInput,tickPlayer,separatePlayers(){},botInput(){},attack,event(){},launchProjectile,tickProjectiles,projectiles:[],projectileId:0,roundTicks:0,ticks:0,snapshot(){return {type:'state',projectiles:context.projectiles};},roundEnd(){throw new Error('Unexpected round end');}});
+vm.runInContext(sim,context);for(let k=0;k<16;k++)vm.runInContext('simTick()',context);assert.equal(context.players[1].speedPotions,0);assert.equal(context.players[1].speedTicks,1200);assert(sent.some(m=>m.type==='event'&&m.event.kind==='speed'));assert(sent.some(m=>m.type==='state'&&Array.isArray(m.projectiles)));
+context.localId=1;context.lastSnapshot=100;context.peerState=()=>{};const beforeId=context.projectileId;vm.runInContext('simTick()',context);assert.equal(context.projectileId,beforeId,'Guests send input without simulating projectile hits');assert.equal(sent.at(-1).type,'input');
+const receiver=source.slice(source.indexOf('function validPlayers('),source.indexOf('function peerState('));
+Object.assign(context,{unlocked:true,WEAPONS,ITEM_COUNTS,validProjectiles,yaw:.4,pitch:.2,started:true,roundEnded:false,$:()=>({hidden:true}),message:{type:'state',players:[player(),player(1)],projectiles:[launchProjectile(player(),{item:'arrow',power:1},7)],scores:[0,0],roundTicks:30,paused:false}});
+context.message.players[1].arrows=4;vm.runInContext(receiver,context);vm.runInContext('peerMessage(message)',context);assert.equal(context.players[1].arrows,4,'Guest displays host ammunition');assert.equal(context.players[1].yaw,.4,'Snapshots preserve local aiming');assert.equal(context.projectiles[0].id,7,'Guest receives authoritative projectile positions');
+context.message={...context.message,players:[player(),{...player(1),slot:99}]};vm.runInContext('peerMessage(message)',context);assert.equal(context.players[1].slot,0,'Reject invalid hotbar slots in snapshots');
+const paused=source.slice(source.indexOf('function setPlaying('),source.indexOf('function pause('));
+Object.assign(context,{document:{body:{classList:{toggle(){}}}},updateStart(){},players:[{...player(),draw:20,use:10},{...player(1),draw:12,use:4}]});vm.runInContext(paused,context);vm.runInContext('setPlaying(false)',context);assert(context.players.every(p=>p.draw===0&&p.use===0),'Pause cancels item use for both fighters');
+console.log('PASS: bow draw/release/cancel, ammo, swept projectile collision, directional shields, snowball knockback, safe pearls and cost, potion use/cancel/expiry, speed/strength, sprint reset, voxel models, host authority and guest input.');

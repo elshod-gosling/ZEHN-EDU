@@ -36,7 +36,7 @@ p=player();p.charge=6;assert.equal(charge(p,.25),.5,'Render interpolation fills 
 [a,b]=pair();assert.equal(attack(a,b,[[-1,0,-1.5,1,3,-1]]).kind,'miss','Solid blocks obstruct attacks');
 p=player();p.health=10;i=emptyInput();i.slot=2;i.shield=true;advance(p,i,32);assert.equal(p.apples,1);assert.equal(p.absorption,4);i.shield=false;advance(p,i,100);assert.equal(p.health,14,'Apple regenerates four health');
 p=player();p.x=13.5;i=emptyInput();i.strafe=1;advance(p,i,40);assert(p.x<=13.7+1e-6,'Cannot walk through boundary');
-assert.equal(sanitizeInput({forward:Infinity,slot:999,attack:'true'}).forward,0);assert.equal(sanitizeInput({slot:999}).slot,2);assert(Math.abs(armorDamage(7)-1.89)<1e-9);
+assert.equal(sanitizeInput({forward:Infinity,slot:999,attack:'true'}).forward,0);assert.equal(sanitizeInput({slot:999}).slot,8);assert(Math.abs(armorDamage(7)-1.89)<1e-9);
 const source=fs.readFileSync('dist/arena/game.mjs','utf8');const copy=vm.runInNewContext(source.slice(source.indexOf('const COPY='),source.indexOf('let lang='))+';COPY;');
 for(const l of ['uz','ru'])for(const key of Object.keys(copy.en))assert(copy[l][key],l+':'+key);
 const html=fs.readFileSync('dist/arena/index.html','utf8');for(const [,key] of html.matchAll(/data-i="([^"]+)"/g))assert(copy.en[key],'Missing UI translation: '+key);
