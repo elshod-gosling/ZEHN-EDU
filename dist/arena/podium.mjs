@@ -19,10 +19,8 @@ function numberMaterial(number){
   return new THREE.MeshBasicMaterial({map,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
 }
 export function celebrationPose(seconds,reducedMotion=false){
-  // Bow from the waist, then stand back up. The winner gives a relaxed wave.
-  const phase=(Math.max(0,seconds)-.4)%4.6;
-  const bow=seconds<.4?0:phase<.8?phase/.8:phase<2.1?1:phase<3?1-(phase-2.1)/.9:0;
-  return {bow:reducedMotion?.65:Math.max(0,bow)*.9,wave:reducedMotion?0:Math.sin(seconds*2.2)*.12};
+  // The winner gives a relaxed wave; both fighters remain upright.
+  return {wave:reducedMotion?0:Math.sin(seconds*2.2)*.12};
 }
 export function celebrationWinner(roundWinner,scores,matchEnded){
   if(matchEnded)return scores[0]===scores[1]?-1:scores[0]>scores[1]?0:1;
@@ -50,7 +48,7 @@ export function createPodium({scene,camera,materials,hiddenDuringResult=[],makeN
     if(!active)return;
     const elapsed=Math.max(0,(now-startedAt)/1000),pose=celebrationPose(elapsed,reducedMotion),drawn=winningId===-1;
     winner.torso.rotation.x=0;winner.head.rotation.x=0;winner.arms[0].rotation.set(-2.45,0,-.15+pose.wave);winner.arms[1].rotation.set(-2.8,0,.12);
-    loser.torso.rotation.x=drawn?0:-pose.bow;loser.head.rotation.x=drawn?0:-pose.bow*.12;
+    loser.torso.rotation.x=0;loser.head.rotation.x=0;
     loser.arms[0].rotation.set(drawn?-1.1:.12,0,drawn?pose.wave:0);loser.arms[1].rotation.set(drawn?-1.1:.12,0,0);
     if(drawn){winner.arms[0].rotation.x=winner.arms[1].rotation.x=-1.1;}
     confetti.visible=!drawn&&!reducedMotion;
@@ -70,7 +68,7 @@ export function createPodium({scene,camera,materials,hiddenDuringResult=[],makeN
     const drawn=winningId===-1;first.visible=!drawn;drawFirst.visible=drawn;
     labels[0].position.y=drawn?.38:.75;labels.forEach(label=>label.visible=!drawn);
     winner.root.position.set(-1,drawn?.56:1.28,0);winner.root.rotation.y=Math.PI+.22;
-    loser.root.position.set(1.1,.56,0);loser.root.rotation.y=drawn?Math.PI+.22:Math.PI/2;
+    loser.root.position.set(1.1,.56,0);loser.root.rotation.y=Math.PI+.22;
     crown.visible=trophy.visible=!drawn;draw(now);
   }
   function hide(){

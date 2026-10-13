@@ -69,7 +69,7 @@ Account identities and previous hosted balances are not automatically transferre
 
 Run `npm ci` and `npm test`. `node supabase-tests.mjs` runs the actual SQL migration against embedded PostgreSQL to check access isolation, correct answers, server timing, pass spending and developer authorization. `npm run bundle:account` rebuilds the checked-in SDK; `node supabase/generate-migration.mjs` regenerates the migration from the schema and lesson bank. Neither build command is needed to serve the existing `dist/`.
 
-Completed rounds use a separate podium camera. The winner wears a crown, raises a trophy and celebrates; the other fighter bows toward the winner. Draws show equal-height platforms. The result card shows the score and next-round/new-match action, with the host controlling continuation in friend duels. First-person equipment stays hidden during the ending and when returning to the menu. Reduced motion uses a static bow and disables confetti.
+Completed rounds use a separate podium camera. The winner wears a crown, raises a trophy and celebrates; the other fighter stands upright facing the podium camera. Draws show equal-height platforms. The result card shows the score and next-round/new-match action, with the host controlling continuation in friend duels. First-person equipment stays hidden during the ending and when returning to the menu. Reduced motion keeps both fighters upright and disables the wave and confetti.
 
 Run `node qa/prepare-podium-preview.mjs` and serve the repository root locally to inspect deterministic win/draw/guest endings at `/qa/.podium-preview/index.html`. These ignored QA fixtures do not contact account services or enter the deployed `dist/` output.
 
