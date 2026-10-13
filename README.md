@@ -1,6 +1,6 @@
 # ZEHN-EDU learning arcade
 
-A buildless, responsive learning prototype in English, Uzbek, and Russian. The redesigned landing page uses an editorial layout inspired by the YUYA reference: oversized typography, open whitespace, and a gallery of four subjects. Open `dist/index.html` through any static web server. No build or npm install is needed.
+A buildless, responsive learning prototype in English, Uzbek, and Russian. The landing page is a colorful adventure hub with four illustrated game worlds, a compact progress bar, rounded blue controls, and responsive world-selection cards. Open `dist/index.html` through any static web server. No build or npm install is needed. The world artwork atlas is a local 370 KB WebP; the source image and generation prompt are in `artwork/quest-worlds.png` and `artwork/QUEST-WORLDS-PROMPT.md`. Artwork uses static CSS backgrounds, with no landing-page animation loop.
 
 ## Included
 
@@ -12,7 +12,7 @@ A buildless, responsive learning prototype in English, Uzbek, and Russian. The r
 - Earn 50 XP once per quest; levels, badges, daily streaks, and progress use browser local storage.
 - Initial language uses the browser time zone and preferred languages, with a persistent manual override. Uzbekistan time zones select Uzbek. This is a location heuristic, not IP geolocation.
 - The calculator icon labeled Desmos opens an embedded calculator inside the math lesson. Clicking it again collapses the calculator. Answers are checked by the lesson form, independently of the iframe.
-- The landing page has no WebGL or animation loop. The 3D arena loads only on its own page after redeeming a credit pass. Optional Google Fonts fall back to system fonts. The original sunset artwork is served locally as a 212 KB JPEG; its full-resolution PNG and generation prompt are in `artwork/`.
+- The landing page has no WebGL or animation loop. The 3D arena loads only on its own page after redeeming a credit pass. Optional Google Fonts fall back to system fonts. The former sunset artwork is retained in the repository; the landing page now uses the quest-world atlas.
 
 ## 3D arena
 
