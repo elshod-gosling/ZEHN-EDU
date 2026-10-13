@@ -4,9 +4,9 @@ export const WEAPONS=[{name:'sword',damage:7,cooldown:12.5},{name:'axe',damage:9
 export const ITEM_COUNTS={2:'apples',3:'arrows',4:'pearls',5:'snowballs',6:'healingPotions',7:'speedPotions',8:'strengthPotions'};
 export const SOLIDS=[[-15,-3,-15,15,0,15],[-15,0,-15,-14,2,15],[14,0,-15,15,2,15],[-14,0,-15,14,2,-14],[-14,0,14,14,2,15],...[-9,9].flatMap(x=>[-9,9].map(z=>[x,0,z,x+1,3,z+1])),[-7,0,-1,-6,1,1],[6,0,-1,7,1,1]];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-export const emptyInput=()=>({forward:0,strafe:0,yaw:0,pitch:0,jump:false,sprint:false,sneak:false,shield:false,attack:false,slot:0});
-export function sanitizeInput(raw={}){const n=(k,a,b)=>Number.isFinite(raw[k])?clamp(raw[k],a,b):0;return {forward:n('forward',-1,1),strafe:n('strafe',-1,1),yaw:n('yaw',-10000,10000),pitch:n('pitch',-1.5,1.5),slot:Math.round(n('slot',0,WEAPONS.length-1)),...Object.fromEntries(['jump','sprint','sneak','shield','attack'].map(k=>[k,raw[k]===true]))};}
-export function player(id=0){return {id,x:0,y:0,z:id?6:-6,vx:0,vy:0,vz:0,yaw:id?0:Math.PI,pitch:0,ground:true,fall:0,jumpDelay:0,health:20,absorption:0,absorptionTicks:0,regen:0,apples:2,arrows:16,pearls:3,snowballs:16,healingPotions:2,speedPotions:1,strengthPotions:1,speedTicks:0,strengthTicks:0,pearlCooldown:0,throwCooldown:0,snowballHurt:0,consumedHold:false,use:0,draw:0,useHeld:false,slot:0,charge:40,shieldTicks:0,shieldDisabled:0,hurt:0,lastDamage:0,sprint:false,sprintReset:false,swing:0,hitFlash:0};}
+export const emptyInput=()=>({forward:0,strafe:0,yaw:0,pitch:0,jump:false,sprint:false,sneak:false,shield:false,attack:false,usePress:false,slot:0});
+export function sanitizeInput(raw={}){const n=(k,a,b)=>Number.isFinite(raw[k])?clamp(raw[k],a,b):0;return {forward:n('forward',-1,1),strafe:n('strafe',-1,1),yaw:n('yaw',-10000,10000),pitch:n('pitch',-1.5,1.5),slot:Math.round(n('slot',0,WEAPONS.length-1)),...Object.fromEntries(['jump','sprint','sneak','shield','attack','usePress'].map(k=>[k,raw[k]===true]))};}
+export function player(id=0){return {id,x:0,y:0,z:id?6:-6,vx:0,vy:0,vz:0,yaw:id?0:Math.PI,pitch:0,ground:true,fall:0,jumpDelay:0,health:20,absorption:0,absorptionTicks:0,regen:0,apples:2,arrows:16,pearls:3,snowballs:16,healingPotions:2,speedPotions:1,strengthPotions:1,speedTicks:0,strengthTicks:0,pearlCooldown:0,throwCooldown:0,snowballHurt:0,use:0,draw:0,useHeld:false,slot:0,charge:40,shieldTicks:0,shieldDisabled:0,hurt:0,lastDamage:0,sprint:false,sprintReset:false,swing:0,hitFlash:0};}
 function box(p){return [p.x-.3,p.y,p.z-.3,p.x+.3,p.y+1.8,p.z+.3];}
 function overlaps(a,b,axis){return [0,1,2].filter(k=>k!==axis).every(k=>a[k+3]>b[k]+1e-7&&a[k]<b[k+3]-1e-7);}
 function moveAxis(p,axis,amount,solids){const a=box(p);let d=amount;for(const b of solids){if(!overlaps(a,b,axis))continue;if(d>0&&a[axis+3]<=b[axis]+1e-7)d=Math.min(d,b[axis]-a[axis+3]);if(d<0&&a[axis]>=b[axis+3]-1e-7)d=Math.max(d,b[axis+3]-a[axis]);}p[['x','y','z'][axis]]+=d;return Math.abs(d-amount)>1e-7;}
@@ -18,9 +18,9 @@ export function tickPlayer(p,raw,solids=SOLIDS){
  if(p.health<=0){p.use=0;p.draw=0;p.shieldTicks=0;return events;}
  if(p.slot===3){if(i.shield&&p.arrows>0)p.draw=Math.min(20,p.draw+1);else if(p.draw>0){if(p.draw>=3&&p.arrows>0){const t=p.draw/20,power=(t*t+2*t)/3;p.arrows--;events.push({kind:'launch',id:p.id,item:'arrow',power});}p.draw=0;}}
  else p.draw=0;
- if(i.shield&&p.slot===4&&!p.useHeld&&p.pearls>0&&!p.pearlCooldown){p.pearls--;p.pearlCooldown=20;events.push({kind:'launch',id:p.id,item:'pearl',power:1});}
- if(i.shield&&p.slot===5&&p.snowballs>0&&!p.throwCooldown){p.snowballs--;p.throwCooldown=5;events.push({kind:'launch',id:p.id,item:'snowball',power:1});}
- if(i.shield&&p.slot>=6&&!p.useHeld&&p[ITEM_COUNTS[p.slot]]>0){p[ITEM_COUNTS[p.slot]]--;p.swing=5;events.push({kind:'launch',id:p.id,item:WEAPONS[p.slot].name,power:1});}
+ if((i.usePress||i.shield&&!p.useHeld)&&p.slot===4&&p.pearls>0&&!p.pearlCooldown){p.pearls--;p.pearlCooldown=20;events.push({kind:'launch',id:p.id,item:'pearl',power:1});}
+ if((i.shield||i.usePress)&&p.slot===5&&p.snowballs>0&&!p.throwCooldown){p.snowballs--;p.throwCooldown=5;events.push({kind:'launch',id:p.id,item:'snowball',power:1});}
+ if((i.usePress||i.shield&&!p.useHeld)&&p.slot>=6&&p[ITEM_COUNTS[p.slot]]>0){p[ITEM_COUNTS[p.slot]]--;p.swing=5;events.push({kind:'launch',id:p.id,item:WEAPONS[p.slot].name,power:1});}
  p.useHeld=i.shield;
  const using=i.shield&&p.slot===2&&p.apples>0;
  if(p.absorptionTicks>0){p.absorptionTicks--;if(!p.absorptionTicks)p.absorption=0;}
