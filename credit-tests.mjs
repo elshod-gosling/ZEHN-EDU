@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
 import { POLICY, advancePractice, canRedeem, passRemaining, initialAccount } from './dist/credit-policy.mjs';
 import { questionBank } from './supabase/question-bank.mjs';
 import { creditCopy } from './dist/credits-ui.mjs';
@@ -17,4 +19,38 @@ assert.equal(initialAccount('server-time').credits,0);
 assert.equal(questionBank.length,32);assert.equal(new Set(questionBank.map(q=>q.id)).size,32);
 for(const q of questionBank){assert.equal(q.id,'q'+q.index);assert(q.answer);for(const l of ['en','uz','ru'])for(const field of ['title','lesson','prompt'])assert(q.question[field][l]);}
 for(const key of Object.keys(creditCopy.en))for(const l of ['uz','ru'])assert(creditCopy[l][key],l+':'+key);
+// Exercise the actual modal replacement lifecycle, including cleanup of its old view.
+const uiSource=fs.readFileSync('dist/credits-ui.mjs','utf8').replace(/^import .*;$/gm,'').replace(/export /g,'')+'\nthis.installCredits=installCredits;';
+const element=()=>({isConnected:true,querySelector:()=>element(),querySelectorAll:()=>[],setAttribute(){}});
+let html='',cleanup=()=>{},listener,state={user:null,account:null,loading:false,configured:true},nodes=new Map();
+const modal={open:false};
+const document={querySelector:selector=>selector==='#modal'?modal:nodes.get(selector)||null,querySelectorAll:()=>[],createElement:element};
+const show=(_,content)=>{
+  cleanup();cleanup=()=>{};
+  for(const node of nodes.values())node.isConnected=false;
+  nodes=new Map([...content.matchAll(/id="([^"]+)"/g)].map(match=>['#'+match[1],element()]));
+  html=content;modal.open=true;
+};
+const change=patch=>{state={...state,...patch};listener();};
+const identity={configured:true,accountState:()=>state,subscribe:fn=>{listener=fn;fn();},initializeAccount:async()=>{},remaining:()=>Infinity,serverNow:()=>Date.now(),
+  createAccount:async()=>{change({user:{email:'student@outlook.com'},loading:true});return {confirmationRequired:false};},signOut:async()=>change({user:null,account:null,loading:false})};
+const context=vm.createContext({identity,POLICY,advancePractice,canRedeem,document,window:{},URLSearchParams,location:{search:''},FormData:class{get(key){return {name:'Student',email:'student@outlook.com',password:'password123',confirm:'password123'}[key];}}});
+vm.runInContext(uiSource,context);
+const ui=context.installCredits({show,getLanguage:()=> 'en',registerCleanup:fn=>{cleanup=fn;}});
+ui.openArena();
+await nodes.get('#account-form').onsubmit({preventDefault(){}});
+assert.match(html,/credit-loading/,'Successful signup waits for the wallet');
+change({account:{role:'developer',credits:0,earned:0},loading:false});
+assert.match(html,/credit-signout/,'Account-ready event replaces the loading menu');
+assert.doesNotMatch(html,/Connecting your account/);
+change({error:'unavailable',account:null});
+assert.match(html,/credit-retry/,'A later connection failure renders retry');
+change({loading:true,error:null});change({loading:true});
+change({account:{role:'developer',credits:0,earned:0},loading:false});
+assert.match(html,/credit-signout/,'Repeated loading updates still recover');
+show('other','<h2>Lesson</h2>');change({account:{role:'developer',credits:0,earned:0}});
+assert.match(html,/Lesson/,'Closed wallet does not replace another modal');
+ui.openArena();await nodes.get('#credit-signout').onclick();
+assert.match(html,/account-form/,'Sign-out returns an open wallet to the account form');
 console.log('PASS: 10-minute target, credit threshold, active-pass reuse, expiration, developer bypass, active practice timing, question bank and three languages.');
+console.log('PASS: Account menu transitions from signup/loading to wallet, retries, modal navigation and sign-out.');

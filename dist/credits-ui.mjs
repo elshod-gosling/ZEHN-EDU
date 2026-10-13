@@ -21,7 +21,12 @@ const time = seconds => `${Math.floor(seconds / 60)}:${String(seconds % 60).padS
 export function installCredits({ show, getLanguage, registerCleanup }) {
   const text = key => creditCopy[getLanguage()]?.[key] || creditCopy.en[key];
   let view = '', cancelPractice = () => {}, signing = false, redeeming = false, authMode = 'create';
-  const showView = (next, html) => { cancelPractice(); cancelPractice = () => {}; view = next; show('progress', html); registerCleanup(() => { cancelPractice(); view = ''; }); };
+  const showView = (next, html) => {
+    cancelPractice(); cancelPractice = () => {};
+    // show() cleans up the previous modal before installing its replacement.
+    show('progress', html); view = next;
+    registerCleanup(() => { cancelPractice(); view = ''; });
+  };
   const status = (message, type = '') => { const el = document.querySelector('#credit-status'); if (el) { el.textContent = message; el.className = 'credit-status ' + type; } };
   function bindSignIn() {
     const out = document.querySelector('#credit-signout'); if (out) out.onclick = () => identity.signOut().catch(() => status(text('error'),'error'));
