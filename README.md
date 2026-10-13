@@ -5,7 +5,7 @@ A buildless, responsive learning prototype in English, Uzbek, and Russian. The r
 ## Included
 
 - Four learning worlds: coding and Windows; Office; mathematics; typing.
-- Ten introductory quests covering Python, C++, C#, Windows, Excel, Word, PowerPoint, linear/quadratic functions, and typing.
+- Ten introductory quests covering Python, C++, C#, Windows, Excel, Word, PowerPoint, linear/quadratic functions, and typing. Coding, Office, and math use a responsive lesson workspace inspired by Codecademy: course navigation, progress, a numbered code preview, distinct answer feedback, and a game unlock action.
 - Four playable games: robot maze, shortcut memory, Monkeytype-inspired typing practice, and a separate first-person 3D block duel arena.
 - Typing practice starts on the first keystroke, with 15/30/60/120-second or 10/25/50/100-word tests, inline error feedback, backspace correction, and WPM, raw speed, accuracy, and local personal bests. Tab then Enter restarts. Five correct words in a completed test earn the existing typing quest reward; arcade credits still come from the separate one-minute learning rounds.
 - Earn 50 XP once per quest; levels, badges, daily streaks, and progress use browser local storage.
