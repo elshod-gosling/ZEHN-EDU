@@ -8,6 +8,7 @@ const nodes=new Map();
 function element(key){if(!nodes.has(key))nodes.set(key,{style:{},classList:{add(){},remove(){},toggle(){}},addEventListener(){},querySelectorAll(){return []},focus(){},open:false,innerHTML:'',textContent:''});return nodes.get(key)}
 const values=new Map();
 const context=vm.createContext({console,Intl,Date,Math,Set,Array,JSON,Number,String,document:{querySelector:element,querySelectorAll(){return []},addEventListener(){},documentElement:{}},navigator:{languages:['en']},localStorage:{getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,v)},setTimeout,clearTimeout,setInterval,clearInterval});
+vm.runInContext(fs.readFileSync('dist/sat-math.js','utf8'),context);
 vm.runInContext(fs.readFileSync('dist/app.js','utf8').replace(/render\(\);\s*$/,''),context);
 const result=vm.runInContext(`(()=>{const keys=Object.keys(copy.en);return {missing:['uz','ru'].flatMap(l=>keys.filter(k=>!copy[l][k]).map(k=>l+':'+k)),first:award('coding-python'),duplicate:award('coding-python'),count:state.completed.length,unlocked:unlocked('coding'),locked:unlocked('math'),normalized:normalizeWord('O‘YIN'),date:localDay(new Date(2026,9,11))}})()`,context);
 assert.deepEqual(Array.from(result.missing),[],'All translation keys exist');

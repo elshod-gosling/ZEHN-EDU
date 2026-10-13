@@ -5,9 +5,10 @@ A buildless, responsive learning prototype in English, Uzbek, and Russian. The r
 ## Included
 
 - Four learning worlds: coding and Windows; Office; mathematics; typing.
-- Ten introductory quests covering Python, C++, C#, Windows, Excel, Word, PowerPoint, linear/quadratic functions, and typing. Coding, Office, and math use a responsive lesson workspace inspired by Codecademy: course navigation, progress, a numbered code preview, distinct answer feedback, and a game unlock action.
+- Eight introductory quests covering Python, C++, C#, Windows, Excel, Word, PowerPoint, and typing, plus 32 original easy SAT-style math questions (24 quadratic and 8 linear). Coding, Office, and math use a responsive lesson workspace inspired by Codecademy: progress, a numbered code preview, distinct answer feedback, and a game unlock action. Math uses a shuffled deck without category tabs or repeats within a cycle, with localized hints, decimal/fraction answers, and preserved awards from the original two math quests.
 - Four playable games: robot maze, shortcut memory, Monkeytype-inspired typing practice, and a separate first-person 3D block duel arena.
 - Typing practice starts on the first keystroke, with 15/30/60/120-second or 10/25/50/100-word tests, inline error feedback, backspace correction, and WPM, raw speed, accuracy, and local personal bests. Tab then Enter restarts. Five correct words in a completed test earn the existing typing quest reward; arcade credits still come from the separate one-minute learning rounds.
+- Smooth mouse-wheel and lesson scrolling respect reduced motion and leave touch, trackpad, and Desmos gestures native.
 - Earn 50 XP once per quest; levels, badges, daily streaks, and progress use browser local storage.
 - Initial language uses the browser time zone and preferred languages, with a persistent manual override. Uzbekistan time zones select Uzbek. This is a location heuristic, not IP geolocation.
 - The calculator icon labeled Desmos opens an embedded calculator inside the math lesson. Clicking it again collapses the calculator. Answers are checked by the lesson form, independently of the iframe.
