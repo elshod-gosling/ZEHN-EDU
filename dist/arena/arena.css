@@ -44,3 +44,9 @@ body.playing .topbar #back,body.playing .session-status>span{padding:6px 11px;bo
 @media(max-width:760px){.hud-bottom{bottom:2px}.topbar .session-status{flex-direction:column;align-items:flex-end;gap:5px}.session-status>span{font-size:9px}body.playing .session-status>span{padding:5px 9px}.match{top:78px}#enemy-tag{min-width:160px}#enemy-tag #opponent-name{max-width:180px;font-size:13px}#look-help{bottom:120px;left:12px}}
 
 .session-status #pass-time{margin:0;font-size:inherit;color:inherit}
+
+/* Pixel vitals use the same crisp grid at every HUD size. */
+.vitals #armor,#hearts,#absorption{display:flex;align-items:center;gap:3px;font-size:0;line-height:0;letter-spacing:0;min-height:0;padding:0}#hearts{margin-top:3px}#absorption:not(:empty){margin-top:3px}#absorption:empty{display:none}
+.vital-icon{display:block;width:24px;height:24px;flex:none;image-rendering:pixelated;filter:drop-shadow(0 1px 0 #000a)}
+#enemy-tag{width:148px;min-width:0;padding:5px 7px;border-radius:6px;background:#102019ed;border-color:#c0d4b38c}#enemy-tag #opponent-name{font-size:13px;max-width:100%;line-height:1.2}.enemy-tag-vitals{gap:6px;margin-top:3px}#enemy-tag .enemy-track{width:84px;height:8px;flex:none;border-color:#e3ead9b3;background:#342a27}#enemy-tag #enemy-health-value{font-size:12px;line-height:1;color:#fff2df}.enemy-track i{background:linear-gradient(#ff8673,#e9514b);box-shadow:inset 0 1px #ffb099}
+@media(max-width:760px){.vital-icon{width:24px;height:24px}#enemy-tag{min-width:0;width:144px}#enemy-tag #opponent-name{font-size:13px}}
