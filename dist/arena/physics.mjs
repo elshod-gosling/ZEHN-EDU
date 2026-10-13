@@ -13,7 +13,6 @@ function moveAxis(p,axis,amount,solids){const a=box(p);let d=amount;for(const b 
 export function tickPlayer(p,raw,solids=SOLIDS){
  const events=[];
  const i=sanitizeInput(raw);p.yaw=i.yaw;p.pitch=i.pitch;p.hitFlash=Math.max(0,p.hitFlash-1);p.swing=Math.max(0,p.swing-1);p.hurt=Math.max(0,p.hurt-1);p.shieldDisabled=Math.max(0,p.shieldDisabled-1);p.jumpDelay=Math.max(0,p.jumpDelay-1);p.charge=Math.min(40,p.charge+1);
- if(!i.shield)p.consumedHold=false;
  for(const key of ['speedTicks','strengthTicks','pearlCooldown','throwCooldown','snowballHurt'])p[key]=Math.max(0,(p[key]||0)-1);
  if(p.slot!==i.slot){p.slot=i.slot;p.charge=0;p.use=0;p.draw=0;}
  if(p.health<=0){p.use=0;p.draw=0;p.shieldTicks=0;return events;}
@@ -21,20 +20,21 @@ export function tickPlayer(p,raw,solids=SOLIDS){
  else p.draw=0;
  if(i.shield&&p.slot===4&&!p.useHeld&&p.pearls>0&&!p.pearlCooldown){p.pearls--;p.pearlCooldown=20;events.push({kind:'launch',id:p.id,item:'pearl',power:1});}
  if(i.shield&&p.slot===5&&p.snowballs>0&&!p.throwCooldown){p.snowballs--;p.throwCooldown=5;events.push({kind:'launch',id:p.id,item:'snowball',power:1});}
- if(i.shield&&p.slot>=6&&!p.consumedHold&&p[ITEM_COUNTS[p.slot]]>0&&(p.slot!==6||p.health<20)){p.use++;if(p.use>=16){p[ITEM_COUNTS[p.slot]]--;p.use=0;p.consumedHold=true;if(p.slot===6){p.health=Math.min(20,p.health+8);events.push({kind:'heal',id:p.id});}else{p[p.slot===7?'speedTicks':'strengthTicks']=1200;events.push({kind:WEAPONS[p.slot].name,id:p.id});}}}else if(p.slot>=6)p.use=0;
+ if(i.shield&&p.slot>=6&&!p.useHeld&&p[ITEM_COUNTS[p.slot]]>0){p[ITEM_COUNTS[p.slot]]--;p.swing=5;events.push({kind:'launch',id:p.id,item:WEAPONS[p.slot].name,power:1});}
  p.useHeld=i.shield;
  const using=i.shield&&p.slot===2&&p.apples>0;
  if(p.absorptionTicks>0){p.absorptionTicks--;if(!p.absorptionTicks)p.absorption=0;}
- if(using){p.use++;if(p.use>=32){p.apples--;p.absorption=4;p.absorptionTicks=2400;p.regen=100;p.use=0;events.push({kind:'heal',id:p.id});}}else if(p.slot<6)p.use=0;
+ if(using){p.use++;if(p.use>=32){p.apples--;p.absorption=4;p.absorptionTicks=2400;p.regen=100;p.use=0;events.push({kind:'heal',id:p.id});}}else p.use=0;
  if(p.regen>0){p.regen--;if(p.regen%25===0)p.health=Math.min(20,p.health+1);}
  p.shieldTicks=i.shield&&p.slot<2&&p.shieldDisabled===0?p.shieldTicks+1:0;
  if(!i.sprint||i.forward<=0)p.sprintReset=false;
- p.sprint=i.sprint&&i.forward>0&&!i.sneak&&!i.shield&&!p.sprintReset;
+ const slowed=p.shieldTicks>0||using||p.draw>0;
+ p.sprint=i.sprint&&i.forward>0&&!i.sneak&&!slowed&&!p.sprintReset;
  const wasGround=p.ground;
  if(i.jump&&p.ground&&!p.jumpDelay){p.vy=.42;p.ground=false;p.jumpDelay=10;if(p.sprint){p.vx-=Math.sin(p.yaw)*.2;p.vz-=Math.cos(p.yaw)*.2;}}
  let forward=i.forward,strafe=i.strafe;const length=Math.hypot(forward,strafe);if(length>1){forward/=length;strafe/=length;}
  const friction=wasGround?.546:.91;
- const acceleration=(wasGround?.1*.16277136/(friction**3):.02)*(p.sprint?1.3:1)*(p.speedTicks>0?1.2:1)*(i.sneak?.3:1)*(i.shield?.2:1);
+ const acceleration=(wasGround?.1*.16277136/(friction**3):.02)*(p.sprint?1.3:1)*(p.speedTicks>0?1.2:1)*(i.sneak?.3:1)*(slowed?.2:1);
  p.vx+=(strafe*Math.cos(p.yaw)-forward*Math.sin(p.yaw))*acceleration;p.vz+=(-forward*Math.cos(p.yaw)-strafe*Math.sin(p.yaw))*acceleration;
  const falling=p.vy<0,hitY=moveAxis(p,1,p.vy,solids);p.ground=falling&&hitY;if(hitY)p.vy=0;
  if(moveAxis(p,0,p.vx,solids))p.vx=0;if(moveAxis(p,2,p.vz,solids))p.vz=0;
