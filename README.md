@@ -6,7 +6,8 @@ A buildless, responsive learning prototype in English, Uzbek, and Russian. The r
 
 - Four learning worlds: coding and Windows; Office; mathematics; typing.
 - Ten introductory quests covering Python, C++, C#, Windows, Excel, Word, PowerPoint, linear/quadratic functions, and typing.
-- Four playable games: robot maze, shortcut memory, typing-powered railway, and a separate first-person 3D block duel arena.
+- Four playable games: robot maze, shortcut memory, Monkeytype-inspired typing practice, and a separate first-person 3D block duel arena.
+- Typing practice starts on the first keystroke, with 15/30/60/120-second or 10/25/50/100-word tests, inline error feedback, backspace correction, and WPM, raw speed, accuracy, and local personal bests. Tab then Enter restarts. Five correct words in a completed test earn the existing typing quest reward; arcade credits still come from the separate one-minute learning rounds.
 - Earn 50 XP once per quest; levels, badges, daily streaks, and progress use browser local storage.
 - Initial language uses the browser time zone and preferred languages, with a persistent manual override. Uzbekistan time zones select Uzbek. This is a location heuristic, not IP geolocation.
 - Desmos loads in an iframe only when requested. A direct calculator link is also provided. Answers are checked by the lesson form, independently of the iframe.
