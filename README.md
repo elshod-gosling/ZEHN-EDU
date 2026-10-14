@@ -1,6 +1,6 @@
 # ZEHN-EDU learning arcade
 
-A buildless, responsive learning prototype in English, Uzbek, and Russian. The landing page is a colorful adventure hub with four illustrated game worlds, a compact progress bar, rounded blue controls, and responsive world-selection cards. Open `dist/index.html` through any static web server. No build or npm install is needed. The world artwork atlas is a local 370 KB WebP; the source image and generation prompt are in `artwork/quest-worlds.png` and `artwork/QUEST-WORLDS-PROMPT.md`. Artwork uses static CSS backgrounds, with no landing-page animation loop.
+A buildless, responsive learning prototype in English, Uzbek, and Russian. The landing page is a colorful adventure hub with four illustrated game worlds, a compact progress bar, and rounded blue controls. The roomy subject gallery has two broad cards per row on desktop, with 30–40px titles, 16px descriptions, muted paper colors, numbered labels, and ticket-like dividers. Cards switch to one column on tablets to fit translated titles, then stack their artwork and text on phones. Open `dist/index.html` through any static web server. No build or npm install is needed. The world artwork atlas is a local 370 KB WebP; the source image and generation prompt are in `artwork/quest-worlds.png` and `artwork/QUEST-WORLDS-PROMPT.md`. Artwork uses static CSS backgrounds, with no landing-page animation loop.
 
 ## Included
 
